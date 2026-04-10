@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMNICUS - Universal Profit Hunter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 10px rgba(34, 197, 94, 0.5); } 50% { box-shadow: 0 0 30px rgba(34, 197, 94, 0.9); } }
+        @keyframes scan-line { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+        @keyframes blink { 0%, 50%, 100% { opacity: 1; } 25%, 75% { opacity: 0.3; } }
+        .glow { animation: pulse-glow 1.5s infinite; }
+        .scanning::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #10b981, transparent);
+            animation: scan-line 2s linear infinite;
+        }
+        .blink { animation: blink 1s infinite; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .signal-buy { background: linear-gradient(135deg, #065f46, #047857); }
+        .signal-sell { background: linear-gradient(135deg, #991b1b, #b91c1c); }
+        .signal-watch { background: linear-gradient(135deg, #78350f, #92400e); }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+
+    <!-- SETUP SCREEN -->
+    <div id="setup-screen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-2xl">
+            <div class="text-center mb-6">
+                <div class="text-5xl mb-2">🤖</div>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 bg-clip-text text-transparent">OMNICUS</h1>
+                <p class="text-gray-400">Universal Profit Hunter</p>
+                <p class="text-red-400 text-xs italic mt-1">"I hunt EVERYTHING. Crypto, sports, gold, horses - if it moves, I profit."</p>
+            </div>
+            
+            <!-- Mode Selection -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Mode:</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="selectMode('learning')" id="mode-learning-btn" class="p-2 rounded-lg border-2 border-purple-500 bg-purple-900 text-center transition">
+                        <div class="text-xl">📚</div>
+                        <div class="text-xs font-bold">LEARNING</div>
+                    </button>
+                    <button onclick="selectMode('paper')" id="mode-paper-btn" class="p-2 rounded-lg border-2 border-gray-600 bg-gray-700 text-center transition">
+                        <div class="text-xl">🎮</div>
+                        <div class="text-xs font-bold">PAPER</div>
+                    </button>
+                    <button onclick="selectMode('real')" id="mode-real-btn" class="p-2 rounded-lg border-2 border-gray-600 bg-gray-700 text-center transition">
+                        <div class="text-xl">💰</div>
+                        <div class="text-xs font-bold">REAL</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Capital -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Starting Capital ($)</label>
+                <input type="number" id="starting-capital" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-xl font-bold text-center" value="1000">
+                <p class="text-xs text-center text-gray-500 mt-1">GOAL: DOUBLE THIS in 24 hours</p>
+            </div>
+
+            <!-- Markets to Scan -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Markets to Hunt:</label>
+                <div class="grid grid-cols-4 gap-2 text-xs">
+                    <label class="flex items-center gap-1 bg-gray-700 p-2 rounded cursor-pointer">
+                        <input type="checkbox" checked class="market-toggle" data-market="crypto"> 🪙 Crypto
+                    </label>
+                    <label class="flex items-center gap-1 bg-gray-700 p-2 rounded cursor-pointer">
+                        <input type="checkbox" checked class="market-toggle" data-market="memes"> 😂 Memes
+                    </label>
+                    <label class="flex items-center gap-1 bg-gray-700 p-2 rounded cursor-pointer">
+                        <input type="checkbox" checked class="market-toggle" data-market="polymarket"> 🎲 Polymarket
+                    </label>
+                    <label class="flex items-center gap-1 bg-gray-700 p-2 rounded cursor-pointer">
+                        <input type="checkbox" checked class="market-toggle" data-market="pumpfun"> 🚀 Pump.fun
+                    </label>
+                    <label class="flex items-center gap-1 bg-gray-700 p-2 rounded cursor-pointer">
+                        <input type="checkbox" checked class="market-toggle" data-market="axiom"> 🔍 Axiom
+                    </label>
+                    <label class="flex items-center gap-1 bg-gray-700 p-2 rounded cursor-pointer">
+                        <input type="checkbox" checked class="market-toggle" data-market="forex"> 💱 Forex
+                    </label>
+                    <label class="flex items-center gap-1 bg-gray-700 p-2 rounded cursor-pointer">
+                        <input type="checkbox" checked class="market-toggle" data-market="metals"> 🥇 Gold/Silver
+                    </label>
+                    <label class="flex items-center gap-1 bg-gray-700 p-2 rounded cursor-pointer">
+                        <input type="checkbox" checked class="market-toggle" data-market="stocks"> 📈 Stocks
+                    </label>
+                    <label class="flex items-center gap-1 bg-gray-700 p-2 rounded cursor-pointer">
+                        <input type="checkbox" checked class="market-toggle" data-market="sports"> ⚽ Sports
+                    </label>
+                    <label class="flex items-center gap-1 bg-gray-700 p-2 rounded cursor-pointer">
+                        <input type="checkbox" checked class="market-toggle" data-market="horses"> 🐎 Horses
+                    </label>
+                    <label class="flex items-center gap-1 bg-gray-700 p-2 rounded cursor-pointer">
+                        <input type="checkbox" checked class="market-toggle" data-market="mma"> 🥊 MMA/UFC
+                    </label>
+                    <label class="flex items-center gap-1 bg-gray-700 p-2 rounded cursor-pointer">
+                        <input type="checkbox" checked class="market-toggle" data-market="esports"> 🎮 Esports
+                    </label>
+                </div>
+            </div>
+
+            <!-- Wallet -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Wallet:</label>
+                <div class="grid grid-cols-4 gap-2">
+                    <button onclick="connectWallet('metamask')" class="p-2 bg-orange-600 hover:bg-orange-700 rounded text-xs">🦊 MetaMask</button>
+                    <button onclick="connectWallet('phantom')" class="p-2 bg-purple-600 hover:bg-purple-700 rounded text-xs">👻 Phantom</button>
+                    <button onclick="connectWallet('backpack')" class="p-2 bg-red-600 hover:bg-red-700 rounded text-xs">🎒 Backpack</button>
+                    <button onclick="connectWallet('none')" class="p-2 bg-gray-600 hover:bg-gray-700 rounded text-xs">⏭️ Skip</button>
+                </div>
+                <p id="wallet-status" class="text-xs text-center text-gray-500 mt-1">No wallet</p>
+            </div>
+
+            <button onclick="launchOmnicus()" class="w-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 hover:from-green-600 hover:via-yellow-600 hover:to-red-600 text-black font-bold py-3 rounded-lg transition text-lg">
+                🚀 LAUNCH THE HUNTER
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboard" class="hidden">
+        <!-- Top Bar -->
+        <div class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
+            <div class="container mx-auto px-2">
+                <div class="flex items-center justify-between h-14">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">🤖</span>
+                        <div>
+                            <h1 class="text-lg font-bold text-green-400">OMNICUS</h1>
+                            <p class="text-xs text-gray-400" id="status-text">HUNTING ALL MARKETS</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="switchMode()" id="mode-switch" class="px-3 py-1 rounded font-bold text-xs bg-purple-600">📚 LEARN</button>
+                    
+                    <div class="flex items-center gap-3 text-xs">
+                        <div class="text-center">
+                            <div class="text-gray-400">Capital</div>
+                            <div id="capital-display" class="font-bold text-green-400">$1,000</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-gray-400">P/L</div>
+                            <div id="profit-display" class="font-bold">$0</div>
+                        </div>
+                        <div class="w-20">
+                            <div class="bg-gray-700 rounded-full h-2">
+                                <div id="progress-bar" class="bg-gradient-to-r from-green-500 to-red-500 h-2 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <div id="progress-text" class="text-center text-xs">0%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button onclick="callMe()" class="bg-green-600 hover:bg-green-700 px-2 py-1 rounded text-xs">📞</button>
+                        <button onclick="toggleTrading()" id="trading-toggle" class="bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-xs">▶️ GO</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OMNICUS SPEAKS -->
+        <div id="omnicus-speaks" class="bg-gradient-to-r from-green-900 to-red-900 p-2 border-b border-yellow-600 glow">
+            <div class="container mx-auto flex items-center gap-2 text-sm">
+                <span class="text-xl">🔥</span>
+                <span class="text-yellow-400 font-bold">OMNICUS:</span>
+                <span id="omnicus-speech" class="flex-1">"Scanning EVERYTHING. Crypto, sports, gold, horses... if it moves, I'm hunting it."</span>
+                <button onclick="speakCurrent()" class="text-xs bg-yellow-600 px-2 py-0.5 rounded">🔊</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="container mx-auto px-2 py-3">
+            
+            <!-- SCANNER GRID - ALL MARKETS -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+                
+                <!-- POLYMARKET -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-blue-500 card-hover transition relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold flex items-center gap-1">🎲 Polymarket</h3>
+                        <span class="text-xs text-blue-400 blink">LIVE</span>
+                    </div>
+                    <div id="polymarket-list" class="space-y-1 max-h-40 overflow-y-auto text-xs"></div>
+                </div>
+
+                <!-- PUMP.FUN -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-yellow-500 card-hover transition relative overflow-hidden scanning">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold flex items-center gap-1">🚀 Pump.fun</h3>
+                        <span class="text-xs text-yellow-400 blink">SCANNING</span>
+                    </div>
+                    <div id="pumpfun-list" class="space-y-1 max-h-40 overflow-y-auto text-xs"></div>
+                </div>
+
+                <!-- AXIOM -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-purple-500 card-hover transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold flex items-center gap-1">🔍 Axiom</h3>
+                        <span class="text-xs text-purple-400">TOKENS</span>
+                    </div>
+                    <div id="axiom-list" class="space-y-1 max-h-40 overflow-y-auto text-xs"></div>
+                </div>
+
+                <!-- MEME COINS -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-orange-500 card-hover transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold flex items-center gap-1">😂 Hot Memes</h3>
+                        <span class="text-xs text-orange-400">TRENDING</span>
+                    </div>
+                    <div id="meme-list" class="space-y-1 max-h-40 overflow-y-auto text-xs"></div>
+                </div>
+
+                <!-- GOLD/SILVER -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-yellow-400 card-hover transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold flex items-center gap-1">🥇 Gold/Silver</h3>
+                        <span class="text-xs text-yellow-300">METALS</span>
+                    </div>
+                    <div id="metals-list" class="space-y-1 text-xs"></div>
+                </div>
+
+                <!-- FOREX -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-green-500 card-hover transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold flex items-center gap-1">💱 Forex</h3>
+                        <span class="text-xs text-green-400">PAIRS</span>
+                    </div>
+                    <div id="forex-list" class="space-y-1 text-xs"></div>
+                </div>
+
+                <!-- SPORTS -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-red-500 card-hover transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold flex items-center gap-1">⚽ Sports</h3>
+                        <span class="text-xs text-red-400">LIVE</span>
+                    </div>
+                    <div id="sports-list" class="space-y-1 max-h-40 overflow-y-auto text-xs"></div>
+                </div>
+
+                <!-- HORSES -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-amber-600 card-hover transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold flex items-center gap-1">🐎 Horses</h3>
+                        <span class="text-xs text-amber-400">RACES</span>
+                    </div>
+                    <div id="horses-list" class="space-y-1 max-h-40 overflow-y-auto text-xs"></div>
+                </div>
+
+                <!-- MMA/UFC -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-red-600 card-hover transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold flex items-center gap-1">🥊 MMA/UFC</h3>
+                        <span class="text-xs text-red-400">FIGHTS</span>
+                    </div>
+                    <div id="mma-list" class="space-y-1 text-xs"></div>
+                </div>
+
+                <!-- ESPORTS -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-cyan-500 card-hover transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold flex items-center gap-1">🎮 Esports</h3>
+                        <span class="text-xs text-cyan-400">MATCHES</span>
+                    </div>
+                    <div id="esports-list" class="space-y-1 text-xs"></div>
+                </div>
+
+                <!-- CRYPTO MAJORS -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-green-400 card-hover transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold flex items-center gap-1">🪙 Crypto</h3>
+                        <span class="text-xs text-green-300">TOP 10</span>
+                    </div>
+                    <div id="crypto-list" class="space-y-1 text-xs"></div>
+                </div>
+
+                <!-- STOCKS -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-blue-400 card-hover transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold flex items-center gap-1">📈 Stocks</h3>
+                        <span class="text-xs text-blue-300">MARKET</span>
+                    </div>
+                    <div id="stocks-list" class="space-y-1 text-xs"></div>
+                </div>
+            </div>
+
+            <!-- Row 2: Positions + Chart + Thoughts -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-3">
+                
+                <!-- Active Positions -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-gray-700">
+                    <h3 class="text-sm font-semibold mb-2 flex items-center gap-2">
+                        <span>💼</span> Active Positions
+                        <span id="positions-count" class="ml-auto bg-red-600 px-2 rounded text-xs">0</span>
+                    </h3>
+                    <div id="positions-list" class="space-y-1 max-h-48 overflow-y-auto text-xs"></div>
+                </div>
+
+                <!-- Chart -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-gray-700">
+                    <h3 class="text-sm font-semibold mb-2">📊 Growth</h3>
+                    <div class="h-48"><canvas id="pnl-chart"></canvas></div>
+                </div>
+
+                <!-- Thoughts -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-gray-700">
+                    <h3 class="text-sm font-semibold mb-2 flex items-center gap-2">
+                        <span>🧠</span> OMNICUS Thoughts
+                        <span class="ml-auto w-2 h-2 bg-green-500 rounded-full blink"></span>
+                    </h3>
+                    <div id="thoughts-stream" class="h-48 overflow-y-auto space-y-1 text-xs"></div>
+                </div>
+            </div>
+
+            <!-- Row 3: Trades + Chat -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                
+                <!-- Recent Trades -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-gray-700">
+                    <h3 class="text-sm font-semibold mb-2">📜 Recent Scalps</h3>
+                    <div id="trades-list" class="grid grid-cols-2 md:grid-cols-3 gap-1 max-h-40 overflow-y-auto text-xs"></div>
+                </div>
+
+                <!-- Chat -->
+                <div class="bg-gray-800 rounded-xl p-3 border border-gray-700">
+                    <h3 class="text-sm font-semibold mb-2">💬 Talk</h3>
+                    <div id="chat-messages" class="h-32 overflow-y-auto space-y-1 mb-2 text-xs"></div>
+                    <div class="flex gap-1">
+                        <input type="text" id="chat-input" class="flex-1 bg-gray-700 rounded px-2 py-1 text-xs" placeholder="Ask anything..." onkeypress="if(event.key==='Enter') sendChat()">
+                        <button onclick="sendChat()" class="bg-green-600 px-3 py-1 rounded text-xs">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== STATE ====================
+        let state = {
+            mode: 'learning',
+            tradingEnabled: false,
+            startingCapital: 1000,
+            currentCapital: 1000,
+            profit: 0,
+            trades: [],
+            positions: [],
+            hunger: 100,
+            wallet: null,
+            markets: {
+                polymarket: [],
+                pumpfun: [],
+                axiom: [],
+                memes: [],
+                metals: [],
+                forex: [],
+                sports: [],
+                horses: [],
+                mma: [],
+                esports: [],
+                crypto: [],
+                stocks: []
+            }
+        };
+
+        // ==================== MARKET DATA ====================
+        const MARKET_DATA = {
+            polymarket: [
+                { name: "Trump wins 2024", odds: 52, volume: "2.1M", change: 5 },
+                { name: "BTC > $100K by EOY", odds: 34, volume: "890K", change: -2 },
+                { name: "Fed cuts rates March", odds: 67, volume: "1.5M", change: 8 },
+                { name: "Ethereum ETF approved", odds: 78, volume: "2.3M", change: 3 },
+                { name: "China invades Taiwan", odds: 12, volume: "4.2M", change: -1 },
+                { name: "Biden drops out", odds: 45, volume: "3.1M", change: 15 },
+                { name: "Aliens confirmed", odds: 8, volume: "500K", change: 2 },
+                { name: "US Recession 2024", odds: 35, volume: "1.8M", change: -4 },
+            ],
+            pumpfun: [
+                { name: "PEPE_MOON", mcap: "$45K", change: 450, age: "2m", signal: "HOT" },
+                { name: "DOGI_420", mcap: "$120K", change: 280, age: "5m", signal: "BUY" },
+                { name: "WIF_CAT", mcap: "$89K", change: -45, age: "12m", signal: "RUG" },
+                { name: "SOL_PUPPY", mcap: "$234K", change: 120, age: "3m", signal: "BUY" },
+                { name: "BONK_KILLER", mcap: "$67K", change: 890, age: "1m", signal: "HOT" },
+                { name: "TURBO_INU", mcap: "$156K", change: 56, age: "8m", signal: "WATCH" },
+                { name: "BASED_PEPE", mcap: "$340K", change: 234, age: "4m", signal: "BUY" },
+                { name: "MOG_CAT", mcap: "$78K", change: -23, age: "15m", signal: null },
+            ],
+            axiom: [
+                { name: "NVIDIA", signal: "ACCUMULATE", score: 94, insiders: "Buying" },
+                { name: "TSLA", signal: "WATCH", score: 67, insiders: "Selling" },
+                { name: "COIN", signal: "STRONG_BUY", score: 89, insiders: "Buying" },
+                { name: "MSTR", signal: "BUY", score: 82, insiders: "Holding" },
+                { name: "META", signal: "ACCUMULATE", score: 78, insiders: "Buying" },
+                { name: "AAPL", signal: "HOLD", score: 71, insiders: "Neutral" },
+            ],
+            memes: [
+                { symbol: "PEPE", price: 0.000012, change: 15 },
+                { symbol: "WIF", price: 2.45, change: -8 },
+                { symbol: "BONK", price: 0.000023, change: 22 },
+                { symbol: "FLOKI", price: 0.00018, change: 5 },
+                { symbol: "BOME", price: 0.0089, change: -12 },
+                { symbol: "POPCAT", price: 0.67, change: 45 },
+                { symbol: "MYRO", price: 0.12, change: 8 },
+                { symbol: "MOG", price: 0.0000023, change: 120 },
+            ],
+            metals: [
+                { symbol: "XAU", name: "Gold", price: 2340, change: 0.8 },
+                { symbol: "XAG", name: "Silver", price: 27.50, change: 1.2 },
+                { symbol: "XPT", name: "Platinum", price: 985, change: -0.3 },
+                { symbol: "XPD", name: "Palladium", price: 1020, change: 0.5 },
+            ],
+            forex: [
+                { pair: "EUR/USD", price: 1.0845, change: 0.15 },
+                { pair: "GBP/USD", price: 1.2630, change: -0.08 },
+                { pair: "USD/JPY", price: 151.20, change: 0.32 },
+                { pair: "AUD/USD", price: 0.6520, change: 0.45 },
+                { pair: "USD/CAD", price: 1.3580, change: -0.12 },
+                { pair: "BTC/USD", price: 67500, change: 2.5 },
+            ],
+            sports: [
+                { match: "Man City vs Arsenal", odds_home: 1.85, odds_draw: 3.60, odds_away: 4.20, live: true },
+                { match: "Real Madrid vs Barcelona", odds_home: 2.10, odds_draw: 3.40, odds_away: 3.30, live: false },
+                { match: "Lakers vs Celtics", odds_home: 1.95, odds_away: 1.90, live: true, sport: "NBA" },
+                { match: "Chiefs vs 49ers", odds_home: 1.75, odds_away: 2.10, live: false, sport: "NFL" },
+                { match: "Liverpool vs Chelsea", odds_home: 1.70, odds_draw: 3.80, odds_away: 4.50, live: true },
+            ],
+            horses: [
+                { race: "Kentucky Derby", horse: "Fierceness", odds: 3.1, jockey: "J. Velazquez", signal: "VALUE" },
+                { race: "Kentucky Derby", horse: "Sierra Leone", odds: 4.5, jockey: "T. Gaffalione", signal: null },
+                { race: "Grand National", horse: "Corach Rambler", odds: 8.0, jockey: "D. Fox", signal: "BUY" },
+                { race: "Dubai World Cup", horse: "Ushba Tesoro", odds: 6.5, jockey: "Y. Iwata", signal: "WATCH" },
+                { race: "Preakness Stakes", horse: "Muth", odds: 5.2, jockey: "J. Hernandez", signal: null },
+            ],
+            mma: [
+                { fight: "Jon Jones vs Stipe Miocic", odds_jones: 1.35, odds_stipe: 3.20, date: "Nov 2024" },
+                { fight: "Islam vs Poirier", odds_islam: 1.45, odds_poirier: 2.80, date: "Jun 2024" },
+                { fight: "Aspinall vs Blaydes", odds_aspinall: 1.25, odds_blaydes: 4.00, date: "Jul 2024", signal: "LOCK" },
+            ],
+            esports: [
+                { match: "T1 vs Gen.G", game: "LoL", odds: "1.85/1.95", tournament: "LCK", live: true },
+                { match: "FaZe vs Navi", game: "CS2", odds: "2.10/1.75", tournament: "IEM", live: false },
+                { match: "OG vs Spirit", game: "Dota 2", odds: "1.90/1.90", tournament: "TI", live: true },
+            ],
+            crypto: [
+                { symbol: "BTC", price: 67500, change: 2.5 },
+                { symbol: "ETH", price: 3400, change: -1.2 },
+                { symbol: "SOL", price: 145, change: 5.8 },
+                { symbol: "BNB", price: 580, change: 1.5 },
+                { symbol: "XRP", price: 0.52, change: -0.8 },
+                { symbol: "ADA", price: 0.45, change: 3.2 },
+                { symbol: "AVAX", price: 35, change: 4.1 },
+                { symbol: "DOGE", price: 0.15, change: 8.5 },
+            ],
+            stocks: [
+                { symbol: "SPY", name: "S&P 500", price: 525, change: 0.5 },
+                { symbol: "QQQ", name: "Nasdaq", price: 450, change: 0.8 },
+                { symbol: "TSLA", name: "Tesla", price: 175, change: -2.3 },
+                { symbol: "NVDA", name: "NVIDIA", price: 880, change: 3.5 },
+                { symbol: "MSTR", name: "MicroStrategy", price: 1450, change: 5.2 },
+            ]
+        };
+
+        // ==================== SETUP ====================
+        function selectMode(mode) {
+            state.mode = mode;
+            document.querySelectorAll('[id^="mode-"]').forEach(btn => {
+                btn.classList.remove('border-purple-500', 'border-blue-500', 'border-red-500', 'bg-purple-900', 'bg-blue-900', 'bg-red-900');
+                btn.classList.add('border-gray-600', 'bg-gray-700');
+            });
+            const btn = document.getElementById(`mode-${mode}-btn`);
+            btn.classList.remove('border-gray-600', 'bg-gray-700');
+            btn.classList.add(mode === 'learning' ? 'border-purple-500 bg-purple-900' : mode === 'paper' ? 'border-blue-500 bg-blue-900' : 'border-red-500 bg-red-900');
+        }
+
+        function connectWallet(type) {
+            const names = { metamask: '🦊 MetaMask', phantom: '👻 Phantom', backpack: '🎒 Backpack', none: 'No wallet' };
+            state.wallet = type === 'none' ? null : type;
+            document.getElementById('wallet-status').textContent = names[type];
+            document.getElementById('wallet-status').classList.toggle('text-green-400', type !== 'none');
+        }
+
+        function launchOmnicus() {
+            state.startingCapital = parseFloat(document.getElementById('starting-capital').value) || 1000;
+            state.currentCapital = state.startingCapital;
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            initDashboard();
+        }
+
+        // ==================== DASHBOARD ====================
+        function initDashboard() {
+            initChart();
+            loadAllMarkets();
+            speak(`Universal Hunter activated! Scanning crypto, sports, horses, gold, polymarket, pump.fun - EVERYTHING. Goal: Double $${state.startingCapital.toLocaleString()}!`);
+            addThought('system', `Mode: ${state.mode.toUpperCase()} | Capital: $${state.startingCapital.toLocaleString()} | Goal: DOUBLE`);
+            
+            setInterval(tradingLoop, 1500);
+            setInterval(updateMarkets, 5000);
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('pnl-chart').getContext('2d');
+            window.pnlChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array(30).fill(''),
+                    datasets: [{
+                        data: Array(30).fill(state.startingCapital),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { display: false }, x: { display: false } }
+                }
+            });
+        }
+
+        function loadAllMarkets() {
+            // Polymarket
+            document.getElementById('polymarket-list').innerHTML = MARKET_DATA.polymarket.map(m => `
+                <div class="p-1.5 bg-gray-700 rounded flex justify-between items-center cursor-pointer hover:bg-gray-600" onclick="tradeMarket('polymarket', '${m.name}')">
+                    <div>
+                        <div class="font-medium truncate" style="max-width:100px">${m.name}</div>
+                        <div class="text-gray-500">Vol: ${m.volume}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="${m.change > 0 ? 'text-green-400' : 'text-red-400'}">${m.change > 0 ? '+' : ''}${m.change}%</div>
+                        <div class="font-bold">${m.odds}%</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Pump.fun
+            document.getElementById('pumpfun-list').innerHTML = MARKET_DATA.pumpfun.map(m => `
+                <div class="p-1.5 rounded flex justify-between items-center cursor-pointer ${m.signal === 'HOT' ? 'signal-buy' : m.signal === 'RUG' ? 'signal-sell' : 'bg-gray-700 hover:bg-gray-600'}" onclick="tradeMarket('pumpfun', '${m.name}')">
+                    <div>
+                        <div class="font-medium">${m.name}</div>
+                        <div class="text-gray-400">${m.age} old</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="${m.change > 0 ? 'text-green-400' : 'text-red-400'}">${m.change > 0 ? '+' : ''}${m.change}%</div>
+                        <div class="text-xs">${m.mcap}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Axiom
+            document.getElementById('axiom-list').innerHTML = MARKET_DATA.axiom.map(m => `
+                <div class="p-1.5 bg-gray-700 rounded flex justify-between items-center cursor-pointer hover:bg-gray-600" onclick="tradeMarket('axiom', '${m.name}')">
+                    <div>
+                        <div class="font-medium">${m.name}</div>
+                        <div class="text-gray-500">${m.insiders}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="${m.signal.includes('BUY') ? 'text-green-400' : 'text-yellow-400'}">${m.signal}</div>
+                        <div class="text-xs">Score: ${m.score}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Memes
+            document.getElementById('meme-list').innerHTML = MARKET_DATA.memes.map(m => `
+                <div class="p-1.5 bg-gray-700 rounded flex justify-between items-center cursor-pointer hover:bg-gray-600" onclick="tradeMarket('meme', '${m.symbol}')">
+                    <span class="font-medium">${m.symbol}</span>
+                    <span class="${m.change > 0 ? 'text-green-400' : 'text-red-400'}">${m.change > 0 ? '+' : ''}${m.change}%</span>
+                </div>
+            `).join('');
+
+            // Metals
+            document.getElementById('metals-list').innerHTML = MARKET_DATA.metals.map(m => `
+                <div class="p-1.5 bg-gray-700 rounded flex justify-between items-center cursor-pointer hover:bg-gray-600" onclick="tradeMarket('metal', '${m.symbol}')">
+                    <div>
+                        <span class="font-medium">${m.symbol}</span>
+                        <span class="text-gray-500 ml-1">${m.name}</span>
+                    </div>
+                    <div class="text-right">
+                        <div>$${m.price.toLocaleString()}</div>
+                        <div class="${m.change > 0 ? 'text-green-400' : 'text-red-400'} text-xs">${m.change > 0 ? '+' : ''}${m.change}%</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Forex
+            document.getElementById('forex-list').innerHTML = MARKET_DATA.forex.map(m => `
+                <div class="p-1.5 bg-gray-700 rounded flex justify-between items-center cursor-pointer hover:bg-gray-600" onclick="tradeMarket('forex', '${m.pair}')">
+                    <span class="font-medium">${m.pair}</span>
+                    <span class="${m.change > 0 ? 'text-green-400' : 'text-red-400'}">${m.change > 0 ? '+' : ''}${m.change}%</span>
+                </div>
+            `).join('');
+
+            // Sports
+            document.getElementById('sports-list').innerHTML = MARKET_DATA.sports.map(m => `
+                <div class="p-1.5 bg-gray-700 rounded cursor-pointer hover:bg-gray-600 ${m.live ? 'border-l-2 border-green-500' : ''}" onclick="tradeMarket('sports', '${m.match}')">
+                    <div class="font-medium truncate">${m.match}</div>
+                    <div class="text-gray-500">${m.odds_home} / ${m.odds_away || m.odds_draw}</div>
+                    ${m.live ? '<span class="text-green-400 text-xs">● LIVE</span>' : ''}
+                </div>
+            `).join('');
+
+            // Horses
+            document.getElementById('horses-list').innerHTML = MARKET_DATA.horses.map(m => `
+                <div class="p-1.5 ${m.signal ? 'signal-buy' : 'bg-gray-700'} rounded cursor-pointer hover:opacity-80" onclick="tradeMarket('horse', '${m.horse}')">
+                    <div class="font-medium">${m.horse}</div>
+                    <div class="text-gray-400 text-xs">${m.race} | ${m.odds}</div>
+                    ${m.signal ? `<span class="text-yellow-400 text-xs">${m.signal}</span>` : ''}
+                </div>
+            `).join('');
+
+            // MMA
+            document.getElementById('mma-list').innerHTML = MARKET_DATA.mma.map(m => `
+                <div class="p-1.5 ${m.signal ? 'signal-buy' : 'bg-gray-700'} rounded cursor-pointer hover:opacity-80" onclick="tradeMarket('mma', '${m.fight}')">
+                    <div class="font-medium truncate text-xs">${m.fight}</div>
+                    <div class="text-gray-400 text-xs">${m.date}</div>
+                </div>
+            `).join('');
+
+            // Esports
+            document.getElementById('esports-list').innerHTML = MARKET_DATA.esports.map(m => `
+                <div class="p-1.5 bg-gray-700 rounded cursor-pointer hover:bg-gray-600 ${m.live ? 'border-l-2 border-cyan-500' : ''}" onclick="tradeMarket('esports', '${m.match}')">
+                    <div class="font-medium text-xs">${m.match}</div>
+                    <div class="text-gray-500 text-xs">${m.game} - ${m.tournament}</div>
+                </div>
+            `).join('');
+
+            // Crypto
+            document.getElementById('crypto-list').innerHTML = MARKET_DATA.crypto.map(m => `
+                <div class="p-1.5 bg-gray-700 rounded flex justify-between items-center cursor-pointer hover:bg-gray-600" onclick="tradeMarket('crypto', '${m.symbol}')">
+                    <span class="font-medium">${m.symbol}</span>
+                    <span class="${m.change > 0 ? 'text-green-400' : 'text-red-400'}">${m.change > 0 ? '+' : ''}${m.change}%</span>
+                </div>
+            `).join('');
+
+            // Stocks
+            document.getElementById('stocks-list').innerHTML = MARKET_DATA.stocks.map(m => `
+                <div class="p-1.5 bg-gray-700 rounded flex justify-between items-center cursor-pointer hover:bg-gray-600" onclick="tradeMarket('stock', '${m.symbol}')">
+                    <div>
+                        <span class="font-medium">${m.symbol}</span>
+                        <span class="text-gray-500 text-xs ml-1">${m.name}</span>
+                    </div>
+                    <span class="${m.change > 0 ? 'text-green-400' : 'text-red-400'}">${m.change > 0 ? '+' : ''}${m.change}%</span>
+                </div>
+            `).join('');
+        }
+
+        function updateMarkets() {
+            // Simulate price changes
+            MARKET_DATA.crypto.forEach(m => m.change += (Math.random() - 0.5) * 2);
+            MARKET_DATA.memes.forEach(m => m.change += (Math.random() - 0.5) * 10);
+            MARKET_DATA.metals.forEach(m => m.change += (Math.random() - 0.5) * 0.5);
+            MARKET_DATA.forex.forEach(m => m.change += (Math.random() - 0.5) * 0.2);
+            MARKET_DATA.pumpfun.forEach(m => m.change += (Math.random() - 0.5) * 100);
+            loadAllMarkets();
+        }
+
+        // ==================== TRADING ====================
+        function tradingLoop() {
+            if (!state.tradingEnabled || state.mode === 'learning') return;
+            
+            // Random trades across ALL markets
+            if (Math.random() > 0.4) {
+                const markets = ['crypto', 'meme', 'polymarket', 'pumpfun', 'sports', 'horse', 'forex', 'metal', 'stock'];
+                const market = markets[Math.floor(Math.random() * markets.length)];
+                executeTrade(market);
+            }
+            
+            // Update positions
+            state.positions.forEach(p => {
+                p.pnl += (Math.random() - 0.45) * 20;
+            });
+            
+            updateDisplays();
+        }
+
+        function executeTrade(market) {
+            const size = state.currentCapital * (0.1 + Math.random() * 0.2);
+            const leverage = state.mode === 'real' ? Math.floor(Math.random() * 5) + 1 : 1;
+            
+            // Find a random asset
+            const assets = {
+                crypto: MARKET_DATA.crypto,
+                meme: MARKET_DATA.memes,
+                polymarket: MARKET_DATA.polymarket,
+                pumpfun: MARKET_DATA.pumpfun,
+                sports: MARKET_DATA.sports,
+                horse: MARKET_DATA.horses,
+                forex: MARKET_DATA.forex,
+                metal: MARKET_DATA.metals,
+                stock: MARKET_DATA.stocks
+            };
+            
+            const list = assets[market] || MARKET_DATA.crypto;
+            const asset = list[Math.floor(Math.random() * list.length)];
+            const symbol = asset.symbol || asset.name || asset.match || asset.horse || '???';
+            
+            // Create position
+            const pos = {
+                id: Date.now(),
+                market,
+                symbol,
+                size,
+                leverage,
+                pnl: 0,
+                time: new Date().toLocaleTimeString()
+            };
+            
+            if (state.positions.length < 8) {
+                state.positions.push(pos);
+                addThought('trade', `${market.toUpperCase()}: ${symbol} x${leverage} | $${size.toFixed(0)}`);
+            }
+            
+            // Auto-close random position
+            if (state.positions.length > 0 && Math.random() > 0.5) {
+                const idx = Math.floor(Math.random() * state.positions.length);
+                const closed = state.positions.splice(idx, 1)[0];
+                const pnl = closed.pnl * closed.leverage;
+                state.currentCapital += pnl;
+                state.trades.unshift({ ...closed, pnl });
+                addThought(pnl > 0 ? 'win' : 'loss', `Closed ${closed.symbol}: ${pnl > 0 ? '+' : ''}$${pnl.toFixed(2)}`);
+                updateChart();
+            }
+        }
+
+        function tradeMarket(market, symbol) {
+            speak(`Loading up ${symbol} on ${market}! Let's cook! 🔥`);
+            if (state.tradingEnabled && state.mode !== 'learning') {
+                executeTrade(market);
+            }
+        }
+
+        // ==================== UI UPDATES ====================
+        function updateDisplays() {
+            const profit = state.currentCapital - state.startingCapital;
+            const progress = (profit / state.startingCapital) * 100;
+            
+            document.getElementById('capital-display').textContent = `$${state.currentCapital.toFixed(0)}`;
+            document.getElementById('capital-display').className = `font-bold ${state.currentCapital >= state.startingCapital ? 'text-green-400' : 'text-red-400'}`;
+            document.getElementById('profit-display').textContent = `${profit >= 0 ? '+' : ''}$${profit.toFixed(2)}`;
+            document.getElementById('profit-display').className = `font-bold ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`;
+            document.getElementById('progress-bar').style.width = `${Math.max(0, Math.min(100, progress))}%`;
+            document.getElementById('progress-text').textContent = `${progress.toFixed(1)}%`;
+            document.getElementById('positions-count').textContent = state.positions.length;
+            
+            // Positions
+            const posEl = document.getElementById('positions-list');
+            if (state.positions.length === 0) {
+                posEl.innerHTML = '<div class="text-gray-500 text-center py-4">Scanning all markets...</div>';
+            } else {
+                posEl.innerHTML = state.positions.map(p => `
+                    <div class="p-1.5 bg-gray-700 rounded flex justify-between ${p.pnl > 0 ? 'border-l-2 border-green-500' : 'border-l-2 border-red-500'}">
+                        <div>
+                            <span class="font-medium">${p.symbol}</span>
+                            <span class="text-gray-500 text-xs">${p.market}</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs">x${p.leverage}</div>
+                            <div class="${p.pnl > 0 ? 'text-green-400' : 'text-red-400'}">${p.pnl > 0 ? '+' : ''}$${p.pnl.toFixed(2)}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Trades
+            const tradesEl = document.getElementById('trades-list');
+            if (state.trades.length === 0) {
+                tradesEl.innerHTML = '<div class="text-gray-500 text-center py-4 col-span-full">No trades yet...</div>';
+            } else {
+                tradesEl.innerHTML = state.trades.slice(0, 12).map(t => `
+                    <div class="p-1.5 bg-gray-700 rounded text-center">
+                        <div class="font-medium">${t.symbol}</div>
+                        <div class="text-xs text-gray-500">${t.market}</div>
+                        <div class="${t.pnl > 0 ? 'text-green-400' : 'text-red-400'}">${t.pnl > 0 ? '+' : ''}$${t.pnl.toFixed(2)}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function updateChart() {
+            window.pnlChart.data.datasets[0].data.push(state.currentCapital);
+            window.pnlChart.data.datasets[0].data.shift();
+            window.pnlChart.update();
+        }
+
+        // ==================== CONTROLS ====================
+        function switchMode() {
+            const modes = ['learning', 'paper', 'real'];
+            state.mode = modes[(modes.indexOf(state.mode) + 1) % modes.length];
+            const btn = document.getElementById('mode-switch');
+            btn.textContent = state.mode === 'learning' ? '📚 LEARN' : state.mode === 'paper' ? '🎮 PAPER' : '💰 REAL';
+            btn.className = `px-3 py-1 rounded font-bold text-xs ${state.mode === 'learning' ? 'bg-purple-600' : state.mode === 'paper' ? 'bg-blue-600' : 'bg-red-600'}`;
+            speak(`Switched to ${state.mode.toUpperCase()} mode!`);
+        }
+
+        function toggleTrading() {
+            state.tradingEnabled = !state.tradingEnabled;
+            document.getElementById('trading-toggle').innerHTML = state.tradingEnabled ? '⏸️ PAUSE' : '▶️ GO';
+            document.getElementById('trading-toggle').className = state.tradingEnabled ? 'bg-yellow-600 hover:bg-yellow-700 px-2 py-1 rounded text-xs' : 'bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-xs';
+            speak(state.tradingEnabled ? "LET'S GO! Hunting ALL markets!" : "Paused. Still watching...");
+        }
+
+        function callMe() {
+            speak("Boss! I'm seeing opportunities across ALL markets right now! Crypto pumping, good polymarket odds, some hot horses running soon!");
+            addThought('system', '📞 Call: Multi-market opportunity alert!');
+        }
+
+        // ==================== CHAT ====================
+        function addThought(type, msg) {
+            const container = document.getElementById('thoughts-stream');
+            const colors = { system: 'text-blue-400', trade: 'text-yellow-400', win: 'text-green-400', loss: 'text-red-400' };
+            const div = document.createElement('div');
+            div.className = `p-1 ${colors[type] || 'text-gray-300'}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            while (container.children.length > 50) container.removeChild(container.firstChild);
+        }
+
+        function addChat(sender, msg) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = sender === 'OMNICUS' ? 'bg-gray-700 p-1.5 rounded' : 'bg-green-900 p-1.5 rounded text-right';
+            div.innerHTML = sender === 'OMNICUS' ? `<span class="text-green-400 font-bold">OMNICUS:</span> ${msg}` : `${msg} <span class="text-blue-400">:You</span>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+            addChat('You', msg);
+            input.value = '';
+            
+            const lower = msg.toLowerCase();
+            let response = "I'm scanning EVERYTHING boss! Ask about: 'polymarket', 'horses', 'gold', 'crypto', 'sports', 'pumpfun', or say 'go' to start!";
+            
+            if (lower.includes('polymarket')) response = "Polymarket got predictions on politics, crypto, sports - seeing some SICK value on a few markets!";
+            else if (lower.includes('horse')) response = "Got horses running TODAY. Found some VALUE picks with good odds!";
+            else if (lower.includes('gold') || lower.includes('silver')) response = "Gold at $2,340, silver $27.50. Hedging opportunities if crypto dumps!";
+            else if (lower.includes('pump') || lower.includes('pumpfun')) response = "Pump.fun is WILD right now! New tokens launching every minute. High risk, HIGH reward!";
+            else if (lower.includes('sport') || lower.includes('football')) response = "Live matches! Found some good odds on Premier League and NBA tonight!";
+            else if (lower.includes('go') || lower.includes('start')) { state.tradingEnabled = true; document.getElementById('trading-toggle').innerHTML = '⏸️ PAUSE'; response = "HUNTING MODE ON! 🔥"; }
+            else if (lower.includes('stop')) { state.tradingEnabled = false; document.getElementById('trading-toggle').innerHTML = '▶️ GO'; response = "Paused. Still watching..."; }
+            
+            setTimeout(() => { addChat('OMNICUS', response); speak(response); }, 300);
+        }
+
+        function speak(text) {
+            document.getElementById('omnicus-speech').textContent = `"${text}"`;
+        }
+
+        function speakCurrent() {
+            if ('speechSynthesis' in window) {
+                const u = new SpeechSynthesisUtterance(document.getElementById('omnicus-speech').textContent.replace(/"/g, ''));
+                speechSynthesis.speak(u);
+            }
+        }
+    </script>
+</body>
+</html>

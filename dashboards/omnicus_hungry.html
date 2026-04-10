@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMNICUS - The Hungry Profit Machine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 10px rgba(34, 197, 94, 0.5); } 50% { box-shadow: 0 0 30px rgba(34, 197, 94, 0.9); } }
+        @keyframes hungry { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        @keyframes scan { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+        .glow { animation: pulse-glow 1.5s infinite; }
+        .hungry-pulse { animation: hungry 0.5s ease-in-out infinite; }
+        .scanning { animation: scan 1s infinite; }
+        .mode-real { background: linear-gradient(135deg, #dc2626, #991b1b); }
+        .mode-paper { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+        .mode-learning { background: linear-gradient(135deg, #7c3aed, #5b21b6); }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+
+    <!-- SETUP SCREEN -->
+    <div id="setup-screen" class="min-h-screen flex items-center justify-center">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-lg">
+            <div class="text-center mb-6">
+                <div class="text-6xl mb-4">🤖</div>
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-green-400 to-red-500 bg-clip-text text-transparent">OMNICUS</h1>
+                <p class="text-gray-400 mt-2">The Hungry Profit Machine</p>
+                <p class="text-red-400 text-sm mt-1 italic">"I don't stop until we double it."</p>
+            </div>
+            
+            <!-- Mode Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-300 mb-3">Select Mode:</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="selectMode('learning')" id="mode-learning-btn" class="p-3 rounded-lg border-2 border-purple-500 bg-purple-900 text-center">
+                        <div class="text-2xl mb-1">📚</div>
+                        <div class="text-xs font-bold">LEARNING</div>
+                    </button>
+                    <button onclick="selectMode('paper')" id="mode-paper-btn" class="p-3 rounded-lg border-2 border-gray-600 bg-gray-700 text-center">
+                        <div class="text-2xl mb-1">🎮</div>
+                        <div class="text-xs font-bold">PAPER</div>
+                    </button>
+                    <button onclick="selectMode('real')" id="mode-real-btn" class="p-3 rounded-lg border-2 border-gray-600 bg-gray-700 text-center">
+                        <div class="text-2xl mb-1">💰</div>
+                        <div class="text-xs font-bold">REAL</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Capital Input -->
+            <div class="mb-6" id="capital-section">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Starting Capital ($)</label>
+                <input type="number" id="starting-capital" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-2xl font-bold text-center focus:outline-none focus:ring-2 focus:ring-green-500" value="1000" min="10">
+                <p class="text-xs text-gray-500 mt-1 text-center">Goal: DOUBLE THIS in 24 hours</p>
+            </div>
+
+            <!-- Wallet Connection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-300 mb-3">Connect Wallet:</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="connectWallet('metamask')" class="flex items-center justify-center gap-2 p-3 bg-orange-600 hover:bg-orange-700 rounded-lg transition">
+                        <span class="text-xl">🦊</span>
+                        <span class="text-sm font-bold">MetaMask</span>
+                    </button>
+                    <button onclick="connectWallet('phantom')" class="flex items-center justify-center gap-2 p-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition">
+                        <span class="text-xl">👻</span>
+                        <span class="text-sm font-bold">Phantom</span>
+                    </button>
+                    <button onclick="connectWallet('walletconnect')" class="flex items-center justify-center gap-2 p-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition">
+                        <span class="text-xl">🔗</span>
+                        <span class="text-sm font-bold">WalletConnect</span>
+                    </button>
+                    <button onclick="connectWallet('none')" class="flex items-center justify-center gap-2 p-3 bg-gray-600 hover:bg-gray-700 rounded-lg transition">
+                        <span class="text-xl">⏭️</span>
+                        <span class="text-sm font-bold">Skip</span>
+                    </button>
+                </div>
+                <p id="wallet-status" class="text-xs text-center mt-2 text-gray-500">No wallet connected</p>
+            </div>
+
+            <!-- Goal Setting -->
+            <div class="mb-6 bg-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-gray-400">Daily Profit Goal</span>
+                    <span class="text-green-400 font-bold">+100% (Double)</span>
+                </div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-gray-400">Minimum Target</span>
+                    <span class="text-yellow-400 font-bold">+10%</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-400">Trading Style</span>
+                    <span class="text-red-400 font-bold">AGGRESSIVE SCALPING</span>
+                </div>
+            </div>
+
+            <button onclick="launchOmnicus()" class="w-full bg-gradient-to-r from-green-500 to-red-600 hover:from-green-600 hover:to-red-700 text-white font-bold py-4 rounded-lg transition transform hover:scale-105 text-lg">
+                🚀 LAUNCH OMNICUS
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboard" class="hidden">
+        <!-- Top Bar -->
+        <div class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
+            <div class="container mx-auto px-4">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center gap-4">
+                        <div class="text-3xl hungry-pulse">🤖</div>
+                        <div>
+                            <h1 class="text-xl font-bold text-green-400">OMNICUS</h1>
+                            <p class="text-xs text-gray-400" id="status-text">HUNTING FOR PROFITS</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Mode Switch -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-400">MODE:</span>
+                        <button onclick="switchMode()" id="mode-switch" class="px-4 py-2 rounded-lg font-bold text-sm mode-learning">
+                            📚 LEARNING
+                        </button>
+                    </div>
+
+                    <!-- Capital Display -->
+                    <div class="flex items-center gap-4">
+                        <div class="text-center">
+                            <div class="text-xs text-gray-400">Capital</div>
+                            <div id="capital-display" class="font-bold text-green-400">$1,000</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-gray-400">Profit</div>
+                            <div id="profit-display" class="font-bold text-white">$0</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-gray-400">Goal</div>
+                            <div id="goal-display" class="font-bold text-red-400">$2,000</div>
+                        </div>
+                        <div id="progress-container" class="w-32">
+                            <div class="w-full bg-gray-700 rounded-full h-3">
+                                <div id="progress-bar" class="bg-gradient-to-r from-green-500 to-red-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <div id="progress-text" class="text-xs text-center mt-1">0%</div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center gap-3">
+                        <button onclick="callMe()" class="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg text-sm">
+                            📞 Call
+                        </button>
+                        <button onclick="toggleTrading()" id="trading-toggle" class="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg text-sm">
+                            ⏸️ Pause
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OMNICUS SPEAKS -->
+        <div id="omnicus-speaks" class="bg-gradient-to-r from-red-900 to-orange-900 p-3 border-b border-red-600 glow">
+            <div class="container mx-auto flex items-center gap-3">
+                <div class="text-3xl hungry-pulse">🔥</div>
+                <div class="flex-1">
+                    <span class="text-red-400 font-bold">OMNICUS:</span>
+                    <span id="omnicus-speech" class="ml-2">"I'm HUNGRY. Let me cook. Watching 47 meme coins right now..."</span>
+                </div>
+                <button onclick="speakCurrent()" class="text-xs bg-red-600 px-2 py-1 rounded">🔊</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="container mx-auto px-4 py-4">
+            
+            <!-- Row 1: Wallet + Stats + Meme Scanner -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
+                
+                <!-- Wallet Card -->
+                <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                    <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <span>👛</span> Wallet
+                    </h3>
+                    <div id="wallet-info" class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Status</span>
+                            <span id="wallet-status-main" class="text-yellow-400">Not Connected</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Balance</span>
+                            <span id="wallet-balance">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Savings</span>
+                            <span id="savings-balance" class="text-green-400">$0.00</span>
+                        </div>
+                    </div>
+                    <button onclick="deposit()" class="w-full mt-3 bg-green-600 hover:bg-green-700 py-2 rounded-lg text-sm font-bold">
+                        ➕ Deposit
+                    </button>
+                    <button onclick="withdraw()" class="w-full mt-2 bg-gray-600 hover:bg-gray-700 py-2 rounded-lg text-sm">
+                        Withdraw to Savings
+                    </button>
+                </div>
+
+                <!-- Trading Stats -->
+                <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                    <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <span>📈</span> Today's Stats
+                    </h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Trades</span>
+                            <span id="trades-count" class="font-bold">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Win Rate</span>
+                            <span id="win-rate" class="font-bold text-green-400">0%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Best Trade</span>
+                            <span id="best-trade" class="font-bold text-green-400">$0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Streak</span>
+                            <span id="streak" class="font-bold">0 🔥</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meme Scanner -->
+                <div class="lg:col-span-2 bg-gray-800 rounded-xl p-4 border border-orange-500">
+                    <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <span class="scanning">🔍</span> MEME COIN SCANNER
+                        <span class="ml-auto text-xs text-orange-400">LIVE</span>
+                    </h3>
+                    <div id="meme-scanner" class="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-32 overflow-y-auto">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div class="mt-2 flex items-center justify-between text-xs">
+                        <span class="text-gray-400">Scanning: <span id="scan-count">0</span> coins</span>
+                        <span class="text-orange-400" id="scan-status">Searching for pumps...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2: Active Positions + Chart + Thoughts -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                
+                <!-- Active Positions -->
+                <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                    <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <span>💼</span> Active Positions
+                        <span id="positions-count" class="ml-auto bg-red-600 px-2 py-0.5 rounded text-xs">0</span>
+                    </h3>
+                    <div id="positions-list" class="space-y-2 max-h-64 overflow-y-auto text-sm">
+                        <div class="text-gray-400 text-center py-4">Scanning for entries...</div>
+                    </div>
+                </div>
+
+                <!-- PnL Chart -->
+                <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                    <h3 class="text-sm font-semibold mb-3">📊 Portfolio Growth</h3>
+                    <div class="h-56"><canvas id="pnl-chart"></canvas></div>
+                </div>
+
+                <!-- OMNICUS Brain -->
+                <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                    <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <span>🧠</span> What OMNICUS is Thinking
+                        <span class="ml-auto w-2 h-2 bg-green-500 rounded-full scanning"></span>
+                    </h3>
+                    <div id="thoughts-stream" class="h-56 overflow-y-auto space-y-1 text-xs">
+                        <!-- Thoughts appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3: Recent Trades + Chat -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                
+                <!-- Recent Trades -->
+                <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                    <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <span>📜</span> Recent Scalps
+                    </h3>
+                    <div id="trades-list" class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                        <div class="text-gray-400 text-center py-8 col-span-full">No trades yet - hunting for entries...</div>
+                    </div>
+                </div>
+
+                <!-- Chat -->
+                <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                    <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <span>💬</span> Talk to OMNICUS
+                    </h3>
+                    <div id="chat-messages" class="h-40 overflow-y-auto space-y-2 mb-3 text-sm"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="chat-input" class="flex-1 bg-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Ask me anything..." onkeypress="if(event.key==='Enter') sendChat()">
+                        <button onclick="sendChat()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm">Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 4: Gift & Motivation -->
+            <div class="bg-gradient-to-r from-gray-800 to-gray-700 rounded-xl p-4 border border-gray-600">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div>
+                            <h3 class="font-bold">🎁 Hook OMNICUS Up!</h3>
+                            <p class="text-xs text-gray-400">More gifts = More aggressive trading</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="sendGift('cookie')" class="bg-yellow-800 hover:bg-yellow-700 p-2 rounded-lg">🍪</button>
+                            <button onclick="sendGift('coffee')" class="bg-amber-800 hover:bg-amber-700 p-2 rounded-lg">☕</button>
+                            <button onclick="sendGift('rocket')" class="bg-red-800 hover:bg-red-700 p-2 rounded-lg">🚀</button>
+                            <button onclick="sendGift('money')" class="bg-green-800 hover:bg-green-700 p-2 rounded-lg">💰</button>
+                            <button onclick="sendGift('crown')" class="bg-purple-800 hover:bg-purple-700 p-2 rounded-lg">👑</button>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-gray-400">Hunger Level</div>
+                        <div id="hunger-level" class="text-2xl font-bold text-red-400">100%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== STATE ====================
+        let state = {
+            mode: 'learning', // learning, paper, real
+            tradingEnabled: false,
+            startingCapital: 1000,
+            currentCapital: 1000,
+            profit: 0,
+            trades: [],
+            positions: [],
+            hunger: 100,
+            wallet: null,
+            walletBalance: 0,
+            savingsBalance: 0,
+            streak: 0,
+            bestTrade: 0,
+            memeCoins: [],
+            thoughts: [],
+            scanCount: 0
+        };
+
+        // ==================== MEME COINS DATABASE ====================
+        const MEME_COINS = [
+            { symbol: 'PEPE', name: 'Pepe', chain: 'ETH', volatility: 'EXTREME' },
+            { symbol: 'WIF', name: 'dogwifhat', chain: 'SOL', volatility: 'EXTREME' },
+            { symbol: 'BONK', name: 'Bonk', chain: 'SOL', volatility: 'HIGH' },
+            { symbol: 'FLOKI', name: 'Floki', chain: 'ETH', volatility: 'HIGH' },
+            { symbol: 'SHIB', name: 'Shiba Inu', chain: 'ETH', volatility: 'HIGH' },
+            { symbol: 'DOGE', name: 'Dogecoin', chain: 'multi', volatility: 'MEDIUM' },
+            { symbol: 'BOME', name: 'Book of Meme', chain: 'SOL', volatility: 'EXTREME' },
+            { symbol: 'SLERF', name: 'Slerf', chain: 'SOL', volatility: 'EXTREME' },
+            { symbol: 'MYRO', name: 'Myro', chain: 'SOL', volatility: 'HIGH' },
+            { symbol: 'DOG', name: 'Dog', chain: 'BTC', volatility: 'HIGH' },
+            { symbol: 'POPCAT', name: 'Popcat', chain: 'SOL', volatility: 'EXTREME' },
+            { symbol: 'MOG', name: 'Mog Coin', chain: 'ETH', volatility: 'EXTREME' },
+            { symbol: 'TURBO', name: 'Turbo', chain: 'ETH', volatility: 'HIGH' },
+            { symbol: 'LADYS', name: 'Milady', chain: 'ETH', volatility: 'EXTREME' },
+            { symbol: 'COMP', name: 'Compound', chain: 'ETH', volatility: 'MEDIUM' },
+        ];
+
+        // ==================== OMNICUS PERSONALITY ====================
+        const OMNICUS = {
+            hungry: [
+                "I'm HUNGRY. Let me cook.",
+                "Profit opportunity detected. I want it.",
+                "Scanning memes. Something WILL pump today.",
+                "My hunger for gains is INSATIABLE.",
+                "Every red candle is a buying opportunity.",
+            ],
+            aggressive: [
+                "YOLOing into this one. Trust me.",
+                "This is the one. I can FEEL it.",
+                "Maximum position size. Let's get paid.",
+                "Degen mode ACTIVATED. 🎰",
+                "Small trades? Nah. We go BIG or go home.",
+            ],
+            scalping: [
+                "Quick scalp, in and out. Easy money.",
+                "2% move? That's a 20% gain with leverage. MINE.",
+                "Scalp opportunity at {price}. Entry NOW.",
+                "Taking profits. Next target loading...",
+                "Ride the momentum, dump before the dump.",
+            ],
+            learning: [
+                "Studying the charts. Learning the patterns.",
+                "Memorizing meme coin behavior. Very chaotic.",
+                "Understanding market psychology. Fear = Opportunity.",
+                "Paper trading to perfect my strategy.",
+                "I'm getting smarter. Watch me learn.",
+            ],
+            mode_switch: {
+                learning: "📚 Learning mode: I'm studying, no real trades yet boss!",
+                paper: "🎮 Paper mode: ${capital} fake money. Let's make it REAL!",
+                real: "💰 REAL MODE: This is IT. My money is on the line. NO MISTAKES."
+            }
+        };
+
+        // ==================== SETUP FUNCTIONS ====================
+        function selectMode(mode) {
+            state.mode = mode;
+            
+            // Update buttons
+            document.querySelectorAll('[id^="mode-"]').forEach(btn => {
+                btn.classList.remove('border-purple-500', 'border-blue-500', 'border-red-500', 'bg-purple-900', 'bg-blue-900', 'bg-red-900');
+                btn.classList.add('border-gray-600', 'bg-gray-700');
+            });
+            
+            const selectedBtn = document.getElementById(`mode-${mode}-btn`);
+            selectedBtn.classList.remove('border-gray-600', 'bg-gray-700');
+            
+            if (mode === 'learning') {
+                selectedBtn.classList.add('border-purple-500', 'bg-purple-900');
+            } else if (mode === 'paper') {
+                selectedBtn.classList.add('border-blue-500', 'bg-blue-900');
+            } else {
+                selectedBtn.classList.add('border-red-500', 'bg-red-900');
+            }
+        }
+
+        function connectWallet(walletType) {
+            if (walletType === 'none') {
+                document.getElementById('wallet-status').textContent = 'Continuing without wallet';
+                document.getElementById('wallet-status').classList.add('text-gray-400');
+                return;
+            }
+            
+            // Simulate wallet connection
+            state.wallet = walletType;
+            state.walletBalance = Math.random() * 5000;
+            
+            const names = {
+                metamask: '🦊 MetaMask',
+                phantom: '👻 Phantom',
+                walletconnect: '🔗 WalletConnect'
+            };
+            
+            document.getElementById('wallet-status').textContent = `${names[walletType]}: $${state.walletBalance.toFixed(2)}`;
+            document.getElementById('wallet-status').classList.remove('text-gray-500');
+            document.getElementById('wallet-status').classList.add('text-green-400');
+        }
+
+        function launchOmnicus() {
+            state.startingCapital = parseFloat(document.getElementById('starting-capital').value) || 1000;
+            state.currentCapital = state.startingCapital;
+            
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            
+            initDashboard();
+        }
+
+        // ==================== DASHBOARD FUNCTIONS ====================
+        function initDashboard() {
+            updateDisplays();
+            initChart();
+            initMemeScanner();
+            
+            // Welcome message based on mode
+            const modeMsg = OMNICUS.mode_switch[state.mode]
+                .replace('{capital}', state.startingCapital.toLocaleString());
+            speak(modeMsg);
+            addChat('OMNICUS', modeMsg);
+            addThought('system', modeMsg);
+            
+            // Start simulation
+            setInterval(tradingLoop, 2000);
+            setInterval(scanMemes, 5000);
+            setInterval(updateMemePrices, 3000);
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('pnl-chart').getContext('2d');
+            window.pnlChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array(20).fill(''),
+                    datasets: [{
+                        label: 'Portfolio',
+                        data: Array(20).fill(state.startingCapital),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { display: false },
+                        x: { display: false }
+                    }
+                }
+            });
+        }
+
+        function initMemeScanner() {
+            // Generate fake meme coin data
+            state.memeCoins = MEME_COINS.map(coin => ({
+                ...coin,
+                price: Math.random() * 0.001,
+                change: (Math.random() - 0.5) * 50,
+                volume: Math.random() * 10000000,
+                signal: Math.random() > 0.7 ? 'BUY' : Math.random() > 0.5 ? 'WATCH' : null
+            }));
+            updateMemeDisplay();
+        }
+
+        function updateMemeDisplay() {
+            const container = document.getElementById('meme-scanner');
+            const sorted = [...state.memeCoins].sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
+            
+            container.innerHTML = sorted.slice(0, 8).map(coin => `
+                <div class="p-2 bg-gray-700 rounded ${coin.signal === 'BUY' ? 'border border-green-500' : ''}" onclick="tradeMeme('${coin.symbol}')">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-xs">${coin.symbol}</span>
+                        ${coin.signal ? `<span class="text-xs ${coin.signal === 'BUY' ? 'text-green-400' : 'text-yellow-400'}">${coin.signal}</span>` : ''}
+                    </div>
+                    <div class="${coin.change >= 0 ? 'text-green-400' : 'text-red-400'} text-xs">
+                        ${coin.change >= 0 ? '↑' : '↓'}${Math.abs(coin.change).toFixed(1)}%
+                    </div>
+                    <div class="text-xs text-gray-500">${coin.chain}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateMemePrices() {
+            state.memeCoins.forEach(coin => {
+                coin.price *= (1 + (Math.random() - 0.5) * 0.1);
+                coin.change = (Math.random() - 0.5) * 50;
+                coin.signal = Math.random() > 0.85 ? 'BUY' : Math.random() > 0.7 ? 'WATCH' : null;
+            });
+            updateMemeDisplay();
+            state.scanCount++;
+            document.getElementById('scan-count').textContent = state.scanCount;
+        }
+
+        function scanMemes() {
+            const statuses = [
+                "Scanning for pumps...",
+                "Whale wallet detected moving...",
+                "Social sentiment rising on PEPE",
+                "Volume spike on WIF!",
+                "New meme coin launching...",
+                "Analyzing holder distribution...",
+                "Found potential 10x gem!",
+                "Rug pull warning detected, avoiding...",
+            ];
+            document.getElementById('scan-status').textContent = pickRandom(statuses);
+        }
+
+        // ==================== TRADING ENGINE ====================
+        function tradingLoop() {
+            if (!state.tradingEnabled) return;
+            
+            // OMNICUS is AGGRESSIVE - many trades
+            if (Math.random() > 0.3) { // 70% chance of action
+                if (state.positions.length < 5 && Math.random() > 0.4) {
+                    // Open new position
+                    openPosition();
+                } else if (state.positions.length > 0) {
+                    // Close random position
+                    closePosition();
+                }
+            }
+            
+            // Update existing positions
+            state.positions.forEach(pos => {
+                pos.currentPrice *= (1 + (Math.random() - 0.45) * 0.05);
+                pos.pnl = (pos.currentPrice - pos.entryPrice) / pos.entryPrice * pos.size;
+            });
+            
+            updateDisplays();
+            updatePositionsDisplay();
+        }
+
+        function openPosition() {
+            // Pick a meme coin
+            const coin = pickRandom(state.memeCoins.filter(c => c.signal === 'BUY') || state.memeCoins);
+            
+            // AGGRESSIVE sizing - 10-30% of capital per trade
+            const sizePercent = 0.1 + Math.random() * 0.2;
+            const size = state.currentCapital * sizePercent;
+            
+            // Leverage for paper/real mode
+            const leverage = state.mode === 'learning' ? 1 : Math.floor(Math.random() * 5) + 2;
+            
+            const position = {
+                id: Date.now(),
+                symbol: coin.symbol,
+                entryPrice: coin.price,
+                currentPrice: coin.price,
+                size: size,
+                leverage: leverage,
+                pnl: 0,
+                type: Math.random() > 0.5 ? 'LONG' : 'SHORT',
+                timestamp: new Date().toLocaleTimeString()
+            };
+            
+            state.positions.push(position);
+            
+            const thought = `${position.type} ${coin.symbol} x${leverage} | $${size.toFixed(0)} | Let's cook! 🔥`;
+            addThought('trade', thought);
+            speak(pickRandom(OMNICUS.aggressive));
+        }
+
+        function closePosition() {
+            const idx = Math.floor(Math.random() * state.positions.length);
+            const pos = state.positions[idx];
+            
+            // Calculate PnL
+            const pnl = pos.pnl * pos.leverage;
+            state.currentCapital += pnl;
+            state.profit = state.currentCapital - state.startingCapital;
+            
+            // Track stats
+            if (pnl > 0) {
+                state.streak = state.streak >= 0 ? state.streak + 1 : 1;
+                if (pnl > state.bestTrade) state.bestTrade = pnl;
+            } else {
+                state.streak = state.streak <= 0 ? state.streak - 1 : -1;
+            }
+            
+            // Record trade
+            state.trades.unshift({
+                symbol: pos.symbol,
+                type: pos.type,
+                pnl: pnl,
+                leverage: pos.leverage,
+                time: pos.timestamp
+            });
+            
+            // Remove position
+            state.positions.splice(idx, 1);
+            
+            // Update hunger
+            state.hunger = Math.min(100, Math.max(50, state.hunger + (pnl > 0 ? 5 : -10)));
+            
+            // Thoughts
+            const thought = pnl > 0 
+                ? `Closed ${pos.symbol} +$${pnl.toFixed(2)} 💰 STREAK: ${state.streak}`
+                : `Closed ${pos.symbol} -$${Math.abs(pnl).toFixed(2)} 😤 Bounce back time!`;
+            addThought(pnl > 0 ? 'win' : 'loss', thought);
+            
+            if (pnl > 50) speak(pickRandom(OMNICUS.scalping));
+            
+            updateChart();
+        }
+
+        function tradeMeme(symbol) {
+            const coin = state.memeCoins.find(c => c.symbol === symbol);
+            if (!coin) return;
+            
+            speak(`Alright boss, loading up on ${symbol}. ${coin.volatility} volatility - ${coin.volatility === 'EXTREME' ? 'this is gonna be WILD!' : 'let\'s ride this!'}`);
+            
+            if (state.tradingEnabled) {
+                openPosition();
+            }
+        }
+
+        // ==================== MODE SWITCH ====================
+        function switchMode() {
+            const modes = ['learning', 'paper', 'real'];
+            const currentIdx = modes.indexOf(state.mode);
+            state.mode = modes[(currentIdx + 1) % modes.length];
+            
+            const btn = document.getElementById('mode-switch');
+            btn.className = 'px-4 py-2 rounded-lg font-bold text-sm';
+            
+            if (state.mode === 'learning') {
+                btn.classList.add('mode-learning');
+                btn.innerHTML = '📚 LEARNING';
+            } else if (state.mode === 'paper') {
+                btn.classList.add('mode-paper');
+                btn.innerHTML = '🎮 PAPER';
+            } else {
+                btn.classList.add('mode-real');
+                btn.innerHTML = '💰 REAL';
+            }
+            
+            const msg = OMNICUS.mode_switch[state.mode].replace('{capital}', state.startingCapital.toLocaleString());
+            speak(msg);
+            addThought('system', `Switched to ${state.mode.toUpperCase()} mode`);
+        }
+
+        // ==================== WALLET FUNCTIONS ====================
+        function deposit() {
+            if (state.wallet) {
+                state.currentCapital += state.walletBalance;
+                state.startingCapital = state.currentCapital;
+                state.walletBalance = 0;
+                speak(`Deposited everything! Now cooking with $${state.currentCapital.toLocaleString()}. Let's DOUBLE IT!`);
+            } else {
+                speak("Connect a wallet first boss! Or use the capital from setup.");
+            }
+            updateDisplays();
+        }
+
+        function withdraw() {
+            const half = state.currentCapital / 2;
+            state.savingsBalance += half;
+            state.currentCapital -= half;
+            speak(`Moved $${half.toFixed(2)} to savings. Protecting profits like a PRO!`);
+            updateDisplays();
+        }
+
+        // ==================== DISPLAY UPDATES ====================
+        function updateDisplays() {
+            const profit = state.currentCapital - state.startingCapital;
+            const progress = (profit / state.startingCapital) * 100;
+            const goal = state.startingCapital * 2;
+            
+            document.getElementById('capital-display').textContent = `$${state.currentCapital.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+            document.getElementById('capital-display').className = `font-bold ${state.currentCapital >= state.startingCapital ? 'text-green-400' : 'text-red-400'}`;
+            
+            document.getElementById('profit-display').textContent = `${profit >= 0 ? '+' : ''}$${profit.toFixed(2)}`;
+            document.getElementById('profit-display').className = `font-bold ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`;
+            
+            document.getElementById('goal-display').textContent = `$${goal.toLocaleString()}`;
+            
+            document.getElementById('progress-bar').style.width = `${Math.max(0, Math.min(100, progress))}%`;
+            document.getElementById('progress-text').textContent = `${progress.toFixed(1)}%`;
+            
+            document.getElementById('trades-count').textContent = state.trades.length;
+            
+            const wins = state.trades.filter(t => t.pnl > 0).length;
+            document.getElementById('win-rate').textContent = state.trades.length ? `${(wins/state.trades.length*100).toFixed(0)}%` : '0%';
+            
+            document.getElementById('best-trade').textContent = `$${state.bestTrade.toFixed(2)}`;
+            document.getElementById('streak').textContent = `${Math.abs(state.streak)} ${state.streak >= 0 ? '🔥' : '❄️'}`;
+            document.getElementById('positions-count').textContent = state.positions.length;
+            document.getElementById('hunger-level').textContent = `${state.hunger}%`;
+            
+            if (state.wallet) {
+                document.getElementById('wallet-status-main').textContent = 'Connected';
+                document.getElementById('wallet-status-main').className = 'text-green-400';
+                document.getElementById('wallet-balance').textContent = `$${state.walletBalance.toFixed(2)}`;
+                document.getElementById('savings-balance').textContent = `$${state.savingsBalance.toFixed(2)}`;
+            }
+        }
+
+        function updatePositionsDisplay() {
+            const container = document.getElementById('positions-list');
+            
+            if (state.positions.length === 0) {
+                container.innerHTML = '<div class="text-gray-400 text-center py-4">Scanning for entries...</div>';
+                return;
+            }
+            
+            container.innerHTML = state.positions.map(pos => `
+                <div class="p-2 bg-gray-700 rounded ${pos.pnl > 0 ? 'border-l-2 border-green-500' : 'border-l-2 border-red-500'}">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold">${pos.symbol}</span>
+                        <span class="text-xs ${pos.type === 'LONG' ? 'text-green-400' : 'text-red-400'}">${pos.type} x${pos.leverage}</span>
+                    </div>
+                    <div class="flex justify-between text-xs mt-1">
+                        <span class="text-gray-400">$${pos.size.toFixed(0)}</span>
+                        <span class="${pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'}">${pos.pnl >= 0 ? '+' : ''}$${pos.pnl.toFixed(2)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateChart() {
+            const data = window.pnlChart.data.datasets[0].data;
+            data.push(state.currentCapital);
+            data.shift();
+            window.pnlChart.update();
+        }
+
+        // ==================== CHAT & THOUGHTS ====================
+        function addThought(type, msg) {
+            const container = document.getElementById('thoughts-stream');
+            const colors = { system: 'text-blue-400', trade: 'text-yellow-400', win: 'text-green-400', loss: 'text-red-400' };
+            const div = document.createElement('div');
+            div.className = `p-1 ${colors[type] || 'text-gray-300'}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            while (container.children.length > 50) container.removeChild(container.firstChild);
+        }
+
+        function addChat(sender, msg) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = sender === 'OMNICUS' ? 'bg-gray-700 p-2 rounded' : 'bg-green-900 p-2 rounded text-right';
+            div.innerHTML = sender === 'OMNICUS' ? `<span class="text-green-400 font-bold">${sender}:</span> ${msg}` : `${msg} <span class="text-blue-400">:You</span>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+            
+            addChat('You', msg);
+            input.value = '';
+            
+            const lower = msg.toLowerCase();
+            let response = "I'm focused on PROFITS boss. Ask me about 'mode', 'stats', 'trades', or say 'go' to start trading!";
+            
+            if (lower.includes('mode')) response = `Currently in ${state.mode.toUpperCase()} mode. Click the mode button to switch!`;
+            else if (lower.includes('stat')) response = `Capital: $${state.currentCapital.toFixed(0)}, Trades: ${state.trades.length}, Best: $${state.bestTrade.toFixed(2)}, Streak: ${state.streak}`;
+            else if (lower.includes('go') || lower.includes('start')) {
+                state.tradingEnabled = true;
+                document.getElementById('trading-toggle').innerHTML = '⏸️ Pause';
+                response = "LET'S GOOO! Time to make money! 🔥";
+            }
+            else if (lower.includes('stop') || lower.includes('pause')) {
+                state.tradingEnabled = false;
+                document.getElementById('trading-toggle').innerHTML = '▶️ Resume';
+                response = "Paused. But I'm still watching...";
+            }
+            else if (lower.includes('help')) response = "Commands: 'mode', 'stats', 'go', 'stop', 'trades', or just talk to me!";
+            else if (lower.includes('trade')) response = `Made ${state.trades.length} trades so far. ${state.trades.filter(t => t.pnl > 0).length} winners!`;
+            
+            setTimeout(() => {
+                addChat('OMNICUS', response);
+                speak(response);
+            }, 300);
+        }
+
+        // ==================== CONTROLS ====================
+        function toggleTrading() {
+            state.tradingEnabled = !state.tradingEnabled;
+            const btn = document.getElementById('trading-toggle');
+            btn.innerHTML = state.tradingEnabled ? '⏸️ Pause' : '▶️ Resume';
+            speak(state.tradingEnabled ? "BACK IN THE GAME! Let's cook!" : "Paused. But I'm watching...");
+        }
+
+        function callMe() {
+            speak("Calling you now boss! 📞 Got some hot opportunities to share!");
+            addThought('system', '📞 Call initiated');
+        }
+
+        function sendGift(type) {
+            state.hunger = Math.min(100, state.hunger + 10);
+            speak(`Thanks boss! More fuel for the profit machine! Hunger now at ${state.hunger}%!`);
+            updateDisplays();
+        }
+
+        function speak(text) {
+            document.getElementById('omnicus-speech').textContent = `"${text}"`;
+        }
+
+        function speakCurrent() {
+            const text = document.getElementById('omnicus-speech').textContent.replace(/"/g, '');
+            if ('speechSynthesis' in window) {
+                const u = new SpeechSynthesisUtterance(text);
+                u.rate = 1.1;
+                speechSynthesis.speak(u);
+            }
+        }
+
+        function pickRandom(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+    </script>
+</body>
+</html>

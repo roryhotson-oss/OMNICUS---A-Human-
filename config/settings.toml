@@ -1,0 +1,101 @@
+# OMNICUS Configuration
+# =====================
+# Default trading parameters
+
+[trading]
+# Minimum confidence to execute trade
+min_confidence = 0.60
+
+# Maximum position size as % of portfolio
+max_position_percent = 5.0
+
+# Risk per trade as % of capital
+risk_per_trade_percent = 2.0
+
+# Daily profit targets
+min_daily_profit_percent = 10.0
+target_daily_profit_percent = 50.0
+max_daily_profit_percent = 100.0
+
+# Stop loss settings
+default_stop_loss_percent = 2.0
+trailing_stop_enabled = true
+trailing_stop_percent = 1.5
+
+# Take profit settings
+default_take_profit_percent = 5.0
+partial_take_profit_enabled = true
+partial_take_percent = 50.0
+
+[scanner]
+# How often to scan markets (seconds)
+scan_interval = 30
+
+# Markets to scan
+crypto_enabled = true
+meme_coins_enabled = true
+prediction_markets_enabled = true
+sports_enabled = true
+commodities_enabled = true
+
+# Scan sources
+coingecko_enabled = true
+coinmarketcap_enabled = true
+pumpfun_enabled = true
+polymarket_enabled = true
+
+[exchanges]
+# Primary exchange
+primary = "binance"
+
+# Enabled exchanges
+binance_enabled = true
+mexc_enabled = true
+kraken_enabled = true
+polymarket_enabled = true
+
+[ai]
+# AI Brain settings
+memory_enabled = true
+emotions_enabled = true
+skills_enabled = true
+
+# Learning rate
+skill_improvement_rate = 0.05
+
+# Memory settings
+max_memories = 10000
+memory_importance_threshold = 0.3
+
+[notifications]
+# Telegram settings
+telegram_enabled = true
+notify_on_trade = true
+notify_on_profit = true
+notify_on_loss = true
+notify_on_milestone = true
+
+# Phone call settings
+phone_enabled = false
+call_on_big_win = true
+call_on_big_loss = true
+big_win_threshold = 500.0
+big_loss_threshold = -200.0
+
+[gifts]
+# Gift economy settings
+gifts_enabled = true
+motivation_boost_on_gift = 0.1
+milestone_celebration_enabled = true
+
+[dashboard]
+# Web dashboard settings
+port = 5000
+host = "0.0.0.0"
+refresh_interval = 5
+
+[logging]
+# Logging settings
+log_level = "INFO"
+log_to_file = true
+log_file = "logs/omnicus.log"

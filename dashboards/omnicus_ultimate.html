@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMNICUS - Ultimate Trading Machine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #ff006e, #8338ec, #3a86ff);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 30px rgba(255, 0, 110, 0.3);
+        }
+
+        .logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 900;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .mode-switcher {
+            display: flex;
+            background: rgba(0,0,0,0.3);
+            border-radius: 25px;
+            padding: 5px;
+        }
+
+        .mode-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            background: transparent;
+            color: #888;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(90deg, #00ff88, #00cc6a);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+
+        .mode-btn.active.paper {
+            background: linear-gradient(90deg, #ffaa00, #ff8800);
+        }
+
+        .mode-btn.active.real {
+            background: linear-gradient(90deg, #ff006e, #cc0055);
+        }
+
+        .wallet-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .wallet-btn {
+            background: linear-gradient(135deg, #8338ec, #3a86ff);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .wallet-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(131, 56, 236, 0.5);
+        }
+
+        .balance-display {
+            background: rgba(0,0,0,0.4);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel {
+            background: rgba(20, 20, 35, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #00ff88;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 400px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            max-height: 300px;
+        }
+
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-message.omnicus {
+            background: linear-gradient(135deg, rgba(131, 56, 236, 0.2), rgba(58, 134, 255, 0.2));
+            border-left: 3px solid #8338ec;
+        }
+
+        .chat-message.user {
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 3px solid #00ff88;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 25px;
+            color: white;
+            outline: none;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .center-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Market Scanner Styles */
+        .market-scanner {
+            background: rgba(20, 20, 35, 0.95);
+        }
+
+        .scanner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .scanner-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .scanner-tab {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.85rem;
+        }
+
+        .scanner-tab:hover, .scanner-tab.active {
+            background: linear-gradient(135deg, rgba(255, 0, 110, 0.3), rgba(131, 56, 236, 0.3));
+            border-color: #ff006e;
+            color: #fff;
+        }
+
+        .scanner-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .market-card {
+            background: linear-gradient(135deg, rgba(30, 30, 50, 0.9), rgba(20, 20, 35, 0.9));
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .market-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255, 0, 110, 0.5);
+            box-shadow: 0 10px 30px rgba(255, 0, 110, 0.2);
+        }
+
+        .market-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .market-name {
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .market-symbol {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .market-change {
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+
+        .market-change.positive {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .market-change.negative {
+            background: rgba(255, 0, 110, 0.2);
+            color: #ff006e;
+        }
+
+        .market-price {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .market-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .market-stat {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .market-stat-value {
+            color: #ccc;
+        }
+
+        .market-platform-link {
+            display: block;
+            margin-top: 12px;
+            padding: 8px;
+            background: linear-gradient(135deg, rgba(131, 56, 236, 0.3), rgba(58, 134, 255, 0.3));
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            color: #fff;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 0.85rem;
+        }
+
+        .market-platform-link:hover {
+            background: linear-gradient(135deg, rgba(131, 56, 236, 0.5), rgba(58, 134, 255, 0.5));
+            transform: scale(1.02);
+        }
+
+        .platform-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .platform-badge.polygon { background: #8247e5; }
+        .platform-badge.solana { background: #14f195; color: #000; }
+        .platform-badge.binance { background: #f3ba2f; color: #000; }
+        .platform-badge.ethereum { background: #627eea; }
+        .platform-badge.base { background: #0052ff; }
+        .platform-badge.arbitrum { background: #28a0f0; }
+        .platform-badge.polymarket { background: #ff5000; }
+        .platform-badge.pumpfun { background: linear-gradient(90deg, #ff6b35, #f7931a); }
+        .platform-badge.axiom { background: #00d4ff; color: #000; }
+        .platform-badge.coinbase { background: #0052ff; }
+        .platform-badge.kraken { background: #5741d9; }
+        .platform-badge.mexc { background: #2c7be5; }
+
+        /* Trading Activity */
+        .activity-feed {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .activity-item.buy { border-left-color: #00ff88; }
+        .activity-item.sell { border-left-color: #ff006e; }
+        .activity-item.scan { border-left-color: #8338ec; }
+
+        .right-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Profit Tracker */
+        .profit-display {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .profit-amount {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #00ff88, #3a86ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .profit-label {
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .profit-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .profit-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #3a86ff);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action-btn.buy {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 200, 100, 0.2));
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: #00ff88;
+        }
+
+        .action-btn.sell {
+            background: linear-gradient(135deg, rgba(255, 0, 110, 0.2), rgba(200, 0, 80, 0.2));
+            border: 1px solid rgba(255, 0, 110, 0.3);
+            color: #ff006e;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Hot Picks */
+        .hot-pick {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 0, 110, 0.1);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 0, 110, 0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .hot-pick:hover {
+            background: rgba(255, 0, 110, 0.2);
+            transform: translateX(5px);
+        }
+
+        .hot-pick-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hot-pick-name {
+            font-weight: 600;
+        }
+
+        .hot-pick-reason {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .hot-pick-change {
+            color: #00ff88;
+            font-weight: 600;
+        }
+
+        /* News Ticker */
+        .news-ticker {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .news-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.85rem;
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+        }
+
+        .news-time {
+            color: #888;
+            font-size: 0.75rem;
+        }
+
+        /* Call Button */
+        .call-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            border: none;
+            border-radius: 25px;
+            color: #000;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+
+        .call-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        }
+
+        /* Platform Links Section */
+        .platform-links {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .platform-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            text-decoration: none;
+            color: #fff;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .platform-link:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .wallet-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .wallet-option {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .wallet-option:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: #8338ec;
+        }
+
+        .wallet-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .wallet-icon.metamask { background: #f6851b; }
+        .wallet-icon.phantom { background: #ab9ff2; }
+        .wallet-icon.walletconnect { background: #3b99fc; }
+
+        .close-modal {
+            margin-top: 20px;
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar, .right-sidebar {
+                order: 1;
+            }
+            .center-content {
+                order: 0;
+            }
+        }
+
+        /* Pulse animation for live data */
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0, 255, 136, 0.2);
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">🤖 OMNICUS</div>
+        <div class="status-bar">
+            <div class="live-indicator">
+                <span class="live-dot"></span>
+                LIVE
+            </div>
+            <div class="mode-switcher">
+                <button class="mode-btn active" onclick="setMode('learn')">📚 Learn</button>
+                <button class="mode-btn" onclick="setMode('paper')">📝 Paper</button>
+                <button class="mode-btn" onclick="setMode('real')">💰 Real</button>
+            </div>
+            <div class="wallet-section">
+                <div class="balance-display">$0.00</div>
+                <button class="wallet-btn" onclick="openWalletModal()">🔗 Connect Wallet</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <div class="panel ai-chat">
+                <div class="panel-title">🧠 OMNICUS AI</div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message omnicus">
+                        <strong>OMNICUS:</strong> Yo boss! I'm locked and loaded, scanning EVERY market right now. Crypto, prediction markets, sports, commodities - I'm watching it all. What we cooking today? 🔥
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Ask me anything..." onkeypress="if(event.key==='Enter')sendMessage()">
+                    <button class="send-btn" onclick="sendMessage()">Send</button>
+                </div>
+                <button class="call-btn" onclick="callOmnicus()">📞 CALL OMNICUS</button>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">🔗 Quick Platform Links</div>
+                <div class="platform-links">
+                    <a href="https://polymarket.com" target="_blank" class="platform-link">🎯 Polymarket</a>
+                    <a href="https://pump.fun" target="_blank" class="platform-link">🚀 pump.fun</a>
+                    <a href="https://axiom.trade" target="_blank" class="platform-link">⚡ Axiom</a>
+                    <a href="https://www.binance.com" target="_blank" class="platform-link">🔶 Binance</a>
+                    <a href="https://www.coingecko.com" target="_blank" class="platform-link">🦎 CoinGecko</a>
+                    <a href="https://coinmarketcap.com" target="_blank" class="platform-link">📊 CoinMarketCap</a>
+                    <a href="https://www.kraken.com" target="_blank" class="platform-link">🦑 Kraken</a>
+                    <a href="https://www.mexc.com" target="_blank" class="platform-link">🚢 MEXC</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Content -->
+        <div class="center-content">
+            <div class="panel market-scanner">
+                <div class="scanner-header">
+                    <div class="panel-title">📡 ULTIMATE MARKET SCANNER</div>
+                    <div class="scanner-tabs">
+                        <button class="scanner-tab active" onclick="filterMarket('all')">All Markets</button>
+                        <button class="scanner-tab" onclick="filterMarket('crypto')">Crypto</button>
+                        <button class="scanner-tab" onclick="filterMarket('meme')">Meme Coins</button>
+                        <button class="scanner-tab" onclick="filterMarket('prediction')">Prediction</button>
+                        <button class="scanner-tab" onclick="filterMarket('sports')">Sports</button>
+                        <button class="scanner-tab" onclick="filterMarket('commodities')">Commodities</button>
+                    </div>
+                </div>
+                <div class="scanner-grid" id="scannerGrid">
+                    <!-- Market cards will be injected here -->
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">📊 Recent Activity</div>
+                <div class="activity-feed" id="activityFeed">
+                    <!-- Activity items will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="right-sidebar">
+            <div class="panel">
+                <div class="panel-title">💰 Profit Tracker</div>
+                <div class="profit-display">
+                    <div class="profit-amount" id="profitAmount">$0.00</div>
+                    <div class="profit-label">Today's Profit</div>
+                    <div class="profit-bar">
+                        <div class="profit-fill" style="width: 0%"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.8rem; color: #888;">
+                        <span>Target: $1,000</span>
+                        <span id="profitPercent">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">🔥 Hot Picks</div>
+                <div id="hotPicks">
+                    <!-- Hot picks will be injected here -->
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">📰 Market News</div>
+                <div class="news-ticker" id="newsTicker">
+                    <!-- News will be injected here -->
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">⚡ Quick Trade</div>
+                <div class="quick-actions">
+                    <button class="action-btn buy" onclick="quickTrade('buy')">
+                        <span>📈</span>
+                        <span>BUY</span>
+                    </button>
+                    <button class="action-btn sell" onclick="quickTrade('sell')">
+                        <span>📉</span>
+                        <span>SELL</span>
+                    </button>
+                    <button class="action-btn" style="background: rgba(131, 56, 236, 0.2); border: 1px solid rgba(131, 56, 236, 0.3); color: #8338ec;" onclick="scanNow()">
+                        <span>🔍</span>
+                        <span>SCAN NOW</span>
+                    </button>
+                    <button class="action-btn" style="background: rgba(255, 170, 0, 0.2); border: 1px solid rgba(255, 170, 0, 0.3); color: #ffaa00;" onclick="toggleAuto()">
+                        <span>🤖</span>
+                        <span>AUTO: OFF</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wallet Modal -->
+    <div class="modal" id="walletModal">
+        <div class="modal-content">
+            <div class="modal-title">🔗 Connect Wallet</div>
+            <div class="wallet-options">
+                <div class="wallet-option" onclick="connectWallet('metamask')">
+                    <div class="wallet-icon metamask">🦊</div>
+                    <div>
+                        <div style="font-weight: 600;">MetaMask</div>
+                        <div style="font-size: 0.8rem; color: #888;">Connect Ethereum & EVM chains</div>
+                    </div>
+                </div>
+                <div class="wallet-option" onclick="connectWallet('phantom')">
+                    <div class="wallet-icon phantom">👻</div>
+                    <div>
+                        <div style="font-weight: 600;">Phantom</div>
+                        <div style="font-size: 0.8rem; color: #888;">Connect Solana & pump.fun</div>
+                    </div>
+                </div>
+                <div class="wallet-option" onclick="connectWallet('walletconnect')">
+                    <div class="wallet-icon walletconnect">🔗</div>
+                    <div>
+                        <div style="font-weight: 600;">WalletConnect</div>
+                        <div style="font-size: 0.8rem; color: #888;">Connect mobile wallets</div>
+                    </div>
+                </div>
+            </div>
+            <button class="close-modal" onclick="closeWalletModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // COMPLETE MARKET DATA WITH PLATFORM LINKS
+        // ============================================
+        
+        const marketData = {
+            // CRYPTO - MAJOR COINS
+            crypto: [
+                {
+                    name: 'Bitcoin',
+                    symbol: 'BTC',
+                    price: 67432.50,
+                    change: 2.34,
+                    volume: '28.5B',
+                    marketCap: '1.32T',
+                    platform: 'binance',
+                    platformName: 'Binance',
+                    link: 'https://www.binance.com/en/trade/BTC_USDT'
+                },
+                {
+                    name: 'Ethereum',
+                    symbol: 'ETH',
+                    price: 3456.78,
+                    change: 1.89,
+                    volume: '15.2B',
+                    marketCap: '415B',
+                    platform: 'ethereum',
+                    platformName: 'Ethereum',
+                    link: 'https://www.binance.com/en/trade/ETH_USDT'
+                },
+                {
+                    name: 'Solana',
+                    symbol: 'SOL',
+                    price: 178.45,
+                    change: 5.67,
+                    volume: '4.8B',
+                    marketCap: '82B',
+                    platform: 'solana',
+                    platformName: 'Solana',
+                    link: 'https://www.binance.com/en/trade/SOL_USDT'
+                }
+            ],
+            
+            // MEME COINS
+            meme: [
+                {
+                    name: 'DOGWIFHAT',
+                    symbol: 'WIF',
+                    price: 2.34,
+                    change: 15.23,
+                    volume: '380M',
+                    marketCap: '2.3B',
+                    platform: 'pumpfun',
+                    platformName: 'pump.fun',
+                    link: 'https://pump.fun/coin/wif'
+                },
+                {
+                    name: 'Bonk',
+                    symbol: 'BONK',
+                    price: 0.0000234,
+                    change: 8.45,
+                    volume: '125M',
+                    marketCap: '1.5B',
+                    platform: 'solana',
+                    platformName: 'Solana',
+                    link: 'https://www.binance.com/en/trade/BONK_USDT'
+                },
+                {
+                    name: 'Pepe',
+                    symbol: 'PEPE',
+                    price: 0.00000789,
+                    change: -3.21,
+                    volume: '890M',
+                    marketCap: '3.3B',
+                    platform: 'ethereum',
+                    platformName: 'Ethereum',
+                    link: 'https://www.binance.com/en/trade/PEPE_USDT'
+                },
+                {
+                    name: 'Dogecoin',
+                    symbol: 'DOGE',
+                    price: 0.156,
+                    change: 4.56,
+                    volume: '1.2B',
+                    marketCap: '22B',
+                    platform: 'binance',
+                    platformName: 'Binance',
+                    link: 'https://www.binance.com/en/trade/DOGE_USDT'
+                },
+                {
+                    name: 'Shiba Inu',
+                    symbol: 'SHIB',
+                    price: 0.0000245,
+                    change: 2.78,
+                    volume: '456M',
+                    marketCap: '14.5B',
+                    platform: 'ethereum',
+                    platformName: 'Ethereum',
+                    link: 'https://www.binance.com/en/trade/SHIB_USDT'
+                },
+                {
+                    name: 'FLOKI',
+                    symbol: 'FLOKI',
+                    price: 0.000178,
+                    change: 12.34,
+                    volume: '234M',
+                    marketCap: '1.7B',
+                    platform: 'ethereum',
+                    platformName: 'Ethereum',
+                    link: 'https://www.binance.com/en/trade/FLOKI_USDT'
+                },
+                {
+                    name: 'BOME',
+                    symbol: 'BOME',
+                    price: 0.0089,
+                    change: 23.45,
+                    volume: '156M',
+                    marketCap: '612M',
+                    platform: 'pumpfun',
+                    platformName: 'pump.fun',
+                    link: 'https://pump.fun/coin/bome'
+                }
+            ],
+            
+            // PREDICTION MARKETS (Polymarket)
+            prediction: [
+                {
+                    name: 'Trump Wins 2024',
+                    symbol: 'TRUMP2024',
+                    price: 52.30,
+                    change: 2.5,
+                    volume: '45M',
+                    marketCap: 'Prediction',
+                    platform: 'polymarket',
+                    platformName: 'Polymarket',
+                    link: 'https://polymarket.com/event/presidential-election-winner-2024'
+                },
+                {
+                    name: 'Fed Rate Cut March',
+                    symbol: 'FEDCUT',
+                    price: 78.50,
+                    change: -1.2,
+                    volume: '12M',
+                    marketCap: 'Prediction',
+                    platform: 'polymarket',
+                    platformName: 'Polymarket',
+                    link: 'https://polymarket.com/event/fed-rate-cut'
+                },
+                {
+                    name: 'BTC > $100K 2024',
+                    symbol: 'BTC100K',
+                    price: 34.20,
+                    change: 5.6,
+                    volume: '8.5M',
+                    marketCap: 'Prediction',
+                    platform: 'polymarket',
+                    platformName: 'Polymarket',
+                    link: 'https://polymarket.com/event/bitcoin-100k'
+                },
+                {
+                    name: 'Ethereum ETF Approved',
+                    symbol: 'ETHETF',
+                    price: 89.00,
+                    change: 1.3,
+                    volume: '23M',
+                    marketCap: 'Prediction',
+                    platform: 'polymarket',
+                    platformName: 'Polymarket',
+                    link: 'https://polymarket.com/event/ethereum-etf'
+                },
+                {
+                    name: 'AI Superintelligence 2024',
+                    symbol: 'AISUPER',
+                    price: 12.40,
+                    change: 8.9,
+                    volume: '5.2M',
+                    marketCap: 'Prediction',
+                    platform: 'polymarket',
+                    platformName: 'Polymarket',
+                    link: 'https://polymarket.com/event/ai-superintelligence'
+                }
+            ],
+            
+            // SPORTS BETTING
+            sports: [
+                {
+                    name: 'Man City vs Arsenal',
+                    symbol: 'MCIARS',
+                    price: 1.85,
+                    change: 5.2,
+                    volume: '2.3M',
+                    marketCap: 'Football',
+                    platform: 'binance',
+                    platformName: 'Binance Sports',
+                    link: 'https://www.binance.com/en/sports'
+                },
+                {
+                    name: 'Lakers vs Celtics',
+                    symbol: 'LALBOS',
+                    price: 2.10,
+                    change: -2.8,
+                    volume: '1.8M',
+                    marketCap: 'NBA',
+                    platform: 'polymarket',
+                    platformName: 'Polymarket',
+                    link: 'https://polymarket.com/sports'
+                },
+                {
+                    name: 'Kentucky Derby Winner',
+                    symbol: 'DERBY24',
+                    price: 4.50,
+                    change: 12.3,
+                    volume: '890K',
+                    marketCap: 'Horses',
+                    platform: 'polymarket',
+                    platformName: 'Polymarket',
+                    link: 'https://polymarket.com/event/kentucky-derby'
+                },
+                {
+                    name: 'Super Bowl LVIII',
+                    symbol: 'SB58',
+                    price: 3.25,
+                    change: 1.5,
+                    volume: '5.6M',
+                    marketCap: 'NFL',
+                    platform: 'polymarket',
+                    platformName: 'Polymarket',
+                    link: 'https://polymarket.com/event/super-bowl'
+                },
+                {
+                    name: 'UFC 300 Main Event',
+                    symbol: 'UFC300',
+                    price: 1.65,
+                    change: 3.4,
+                    volume: '1.2M',
+                    marketCap: 'MMA',
+                    platform: 'polymarket',
+                    platformName: 'Polymarket',
+                    link: 'https://polymarket.com/event/ufc-300'
+                },
+                {
+                    name: 'Champions League Winner',
+                    symbol: 'UCL24',
+                    price: 2.80,
+                    change: -1.2,
+                    volume: '3.4M',
+                    marketCap: 'Football',
+                    platform: 'polymarket',
+                    platformName: 'Polymarket',
+                    link: 'https://polymarket.com/event/champions-league'
+                }
+            ],
+            
+            // COMMODITIES
+            commodities: [
+                {
+                    name: 'Gold',
+                    symbol: 'XAU',
+                    price: 2345.60,
+                    change: 0.85,
+                    volume: '89B',
+                    marketCap: '13T',
+                    platform: 'binance',
+                    platformName: 'Binance',
+                    link: 'https://www.binance.com/en/trade/XAU_USDT'
+                },
+                {
+                    name: 'Silver',
+                    symbol: 'XAG',
+                    price: 28.45,
+                    change: 1.23,
+                    volume: '12B',
+                    marketCap: '1.5T',
+                    platform: 'binance',
+                    platformName: 'Binance',
+                    link: 'https://www.binance.com/en/trade/XAG_USDT'
+                },
+                {
+                    name: 'Crude Oil WTI',
+                    symbol: 'OIL',
+                    price: 78.90,
+                    change: -2.34,
+                    volume: '45B',
+                    marketCap: 'N/A',
+                    platform: 'binance',
+                    platformName: 'Binance',
+                    link: 'https://www.binance.com/en/trade/COIN_USDT'
+                },
+                {
+                    name: 'Natural Gas',
+                    symbol: 'GAS',
+                    price: 2.34,
+                    change: 4.56,
+                    volume: '8.9B',
+                    marketCap: 'N/A',
+                    platform: 'binance',
+                    platformName: 'Binance',
+                    link: 'https://www.binance.com/en/trade/GAS_USDT'
+                },
+                {
+                    name: 'Copper',
+                    symbol: 'XCU',
+                    price: 4.23,
+                    change: 0.67,
+                    volume: '3.2B',
+                    marketCap: 'N/A',
+                    platform: 'binance',
+                    platformName: 'Binance',
+                    link: 'https://www.binance.com/en/trade/CU_USDT'
+                }
+            ],
+            
+            // AXIOM / ALTCOINS
+            axiom: [
+                {
+                    name: 'Render',
+                    symbol: 'RNDR',
+                    price: 8.45,
+                    change: 7.89,
+                    volume: '234M',
+                    marketCap: '4.5B',
+                    platform: 'axiom',
+                    platformName: 'Axiom',
+                    link: 'https://axiom.trade/token/rndr'
+                },
+                {
+                    name: 'Injective',
+                    symbol: 'INJ',
+                    price: 34.56,
+                    change: 4.23,
+                    volume: '156M',
+                    marketCap: '3.2B',
+                    platform: 'axiom',
+                    platformName: 'Axiom',
+                    link: 'https://axiom.trade/token/inj'
+                },
+                {
+                    name: 'Sui',
+                    symbol: 'SUI',
+                    price: 1.45,
+                    change: 12.34,
+                    volume: '345M',
+                    marketCap: '1.8B',
+                    platform: 'axiom',
+                    platformName: 'Axiom',
+                    link: 'https://axiom.trade/token/sui'
+                },
+                {
+                    name: 'Sei',
+                    symbol: 'SEI',
+                    price: 0.78,
+                    change: 8.90,
+                    volume: '189M',
+                    marketCap: '2.1B',
+                    platform: 'axiom',
+                    platformName: 'Axiom',
+                    link: 'https://axiom.trade/token/sei'
+                },
+                {
+                    name: 'Celestia',
+                    symbol: 'TIA',
+                    price: 12.34,
+                    change: 5.67,
+                    volume: '267M',
+                    marketCap: '2.8B',
+                    platform: 'axiom',
+                    platformName: 'Axiom',
+                    link: 'https://axiom.trade/token/tia'
+                },
+                {
+                    name: 'Aptos',
+                    symbol: 'APT',
+                    price: 9.87,
+                    change: 3.45,
+                    volume: '198M',
+                    marketCap: '4.2B',
+                    platform: 'axiom',
+                    platformName: 'Axiom',
+                    link: 'https://axiom.trade/token/apt'
+                }
+            ]
+        };
+
+        // News data
+        const newsData = [
+            { title: 'Bitcoin breaks $67K resistance level', time: '2m ago' },
+            { title: 'Ethereum ETF approval odds surge to 89%', time: '5m ago' },
+            { title: 'Solana meme coin volume hits $500M daily', time: '8m ago' },
+            { title: 'Gold reaches all-time high amid inflation fears', time: '12m ago' },
+            { title: 'Polymarket sees record betting on 2024 election', time: '15m ago' },
+            { title: 'Fed signals potential rate cuts in Q2', time: '20m ago' },
+            { title: 'Major whale buys $50M in DOGE', time: '25m ago' },
+            { title: 'pump.fun launches new trading features', time: '32m ago' }
+        ];
+
+        // Hot picks data
+        const hotPicks = [
+            { name: 'WIF', reason: 'Meme coin breakout', change: '+15.23%' },
+            { name: 'SUI', reason: 'AI narrative play', change: '+12.34%' },
+            { name: 'TRUMP2024', reason: 'High volume prediction', change: '+2.5%' },
+            { name: 'XAG (Silver)', reason: 'Inflation hedge', change: '+1.23%' },
+            { name: 'BOME', reason: 'Trending on pump.fun', change: '+23.45%' }
+        ];
+
+        // ============================================
+        // RENDER FUNCTIONS
+        // ============================================
+
+        function renderMarketCard(item) {
+            const changeClass = item.change >= 0 ? 'positive' : 'negative';
+            const changeSymbol = item.change >= 0 ? '+' : '';
+            
+            return `
+                <div class="market-card" data-category="${getCategory(item.platform)}">
+                    <span class="platform-badge ${item.platform}">${item.platformName}</span>
+                    <div class="market-card-header">
+                        <div class="market-name">
+                            ${item.name}
+                            <span class="market-symbol">${item.symbol}</span>
+                        </div>
+                        <div class="market-change ${changeClass}">
+                            ${changeSymbol}${item.change.toFixed(2)}%
+                        </div>
+                    </div>
+                    <div class="market-price">$${formatPrice(item.price)}</div>
+                    <div class="market-stats">
+                        <div class="market-stat">
+                            <span>Volume</span>
+                            <span class="market-stat-value">${item.volume}</span>
+                        </div>
+                        <div class="market-stat">
+                            <span>Mkt Cap</span>
+                            <span class="market-stat-value">${item.marketCap}</span>
+                        </div>
+                    </div>
+                    <a href="${item.link}" target="_blank" class="market-platform-link">
+                        🚀 Trade on ${item.platformName} →
+                    </a>
+                </div>
+            `;
+        }
+
+        function getCategory(platform) {
+            if (['pumpfun'].includes(platform)) return 'meme';
+            if (['polymarket'].includes(platform)) return 'prediction';
+            if (['axiom'].includes(platform)) return 'axiom';
+            return 'crypto';
+        }
+
+        function formatPrice(price) {
+            if (price < 0.001) return price.toFixed(8);
+            if (price < 1) return price.toFixed(6);
+            if (price < 100) return price.toFixed(2);
+            return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function renderAllMarkets() {
+            const grid = document.getElementById('scannerGrid');
+            let allCards = '';
+            
+            // Combine all markets
+            const allMarkets = [
+                ...marketData.crypto,
+                ...marketData.meme,
+                ...marketData.prediction,
+                ...marketData.sports,
+                ...marketData.commodities,
+                ...marketData.axiom
+            ];
+            
+            // Sort by change percentage (hottest first)
+            allMarkets.sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
+            
+            allMarkets.forEach(item => {
+                allCards += renderMarketCard(item);
+            });
+            
+            grid.innerHTML = allCards;
+        }
+
+        function renderNews() {
+            const ticker = document.getElementById('newsTicker');
+            ticker.innerHTML = newsData.map(item => `
+                <div class="news-item">
+                    <div>${item.title}</div>
+                    <div class="news-time">${item.time}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderHotPicks() {
+            const container = document.getElementById('hotPicks');
+            container.innerHTML = hotPicks.map(item => `
+                <div class="hot-pick">
+                    <div class="hot-pick-info">
+                        <div class="hot-pick-name">${item.name}</div>
+                        <div class="hot-pick-reason">${item.reason}</div>
+                    </div>
+                    <div class="hot-pick-change">${item.change}</div>
+                </div>
+            `).join('');
+        }
+
+        function addActivityItem(type, message) {
+            const feed = document.getElementById('activityFeed');
+            const time = new Date().toLocaleTimeString();
+            const item = document.createElement('div');
+            item.className = `activity-item ${type}`;
+            item.innerHTML = `
+                <span>${message}</span>
+                <span style="color: #888; font-size: 0.8rem;">${time}</span>
+            `;
+            feed.insertBefore(item, feed.firstChild);
+            
+            // Keep only last 20 items
+            while (feed.children.length > 20) {
+                feed.removeChild(feed.lastChild);
+            }
+        }
+
+        // ============================================
+        // INTERACTION FUNCTIONS
+        // ============================================
+
+        function filterMarket(category) {
+            // Update active tab
+            document.querySelectorAll('.scanner-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const grid = document.getElementById('scannerGrid');
+            let cards = '';
+            
+            if (category === 'all') {
+                renderAllMarkets();
+                return;
+            }
+            
+            const categoryMap = {
+                'crypto': [...marketData.crypto, ...marketData.axiom],
+                'meme': marketData.meme,
+                'prediction': marketData.prediction,
+                'sports': marketData.sports,
+                'commodities': marketData.commodities
+            };
+            
+            const items = categoryMap[category] || [];
+            items.sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
+            
+            items.forEach(item => {
+                cards += renderMarketCard(item);
+            });
+            
+            grid.innerHTML = cards;
+        }
+
+        function setMode(mode) {
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const modeNames = {
+                'learn': '📚 LEARNING MODE',
+                'paper': '📝 PAPER TRADING',
+                'real': '💰 REAL MONEY'
+            };
+            
+            addOmnicusMessage(`Switched to ${modeNames[mode]}. ${mode === 'learn' ? 'Watch and learn, boss!' : mode === 'paper' ? 'Let\'s test these strategies!' : 'Let\'s make some REAL money! 🔥'}`);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            addUserMessage(message);
+            input.value = '';
+            
+            // Generate OMNICUS response
+            setTimeout(() => {
+                const response = generateOmnicusResponse(message);
+                addOmnicusResponse(response);
+            }, 500);
+        }
+
+        function addUserMessage(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message user';
+            msgDiv.innerHTML = `<strong>YOU:</strong> ${message}`;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addOmnicusMessage(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message omnicus';
+            msgDiv.innerHTML = `<strong>OMNICUS:</strong> ${message}`;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addOmnicusResponse(message) {
+            addOmnicusMessage(message);
+            addActivityItem('scan', 'AI response generated');
+        }
+
+        function generateOmnicusResponse(input) {
+            const lowerInput = input.toLowerCase();
+            
+            if (lowerInput.includes('price') || lowerInput.includes('worth')) {
+                return `Yo boss! BTC is sitting at $67,432, up 2.34% today. ETH at $3,456. Looking bullish! Want me to scan for entries? 📈`;
+            }
+            if (lowerInput.includes('buy') || lowerInput.includes('long')) {
+                return `I'm seeing some nice setups! WIF looking strong with +15% today. Also watching SUI for AI narrative. Want me to execute? 🔥`;
+            }
+            if (lowerInput.includes('sell') || lowerInput.includes('short')) {
+                return `Careful boss! Market is mostly green today. If you wanna short, PEPE dipped -3% might bounce back. Your call though! 💰`;
+            }
+            if (lowerInput.includes('meme')) {
+                return `Meme coins are COOKING today! 🔥 WIF up 15%, BOME up 23%! pump.fun is popping. Check the scanner - I got all the hottest ones linked up!`;
+            }
+            if (lowerInput.includes('polymarket') || lowerInput.includes('prediction')) {
+                return `Polymarket is buzzing! Trump 2024 at 52%, ETH ETF at 89% approval odds. Big money flowing into prediction markets. You want in?`;
+            }
+            if (lowerInput.includes('gold') || lowerInput.includes('silver') || lowerInput.includes('commodit')) {
+                return `Gold hit $2,345 - all time highs! 🥇 Silver at $28.45, up 1.23%. Inflation hedge play is working. These are safe compared to meme coins lol`;
+            }
+            if (lowerInput.includes('sport') || lowerInput.includes('football') || lowerInput.includes('horse')) {
+                return `Sports markets are live! Champions League, NBA, even Kentucky Derby - I got 'em all linked up. Big game tonight: Man City vs Arsenal! ⚽`;
+            }
+            if (lowerInput.includes('scan')) {
+                return `Scanning ALL markets right now... Crypto, meme coins, Polymarket, sports, commodities - I see EVERYTHING! 🔍 Currently 47 opportunities detected.`;
+            }
+            if (lowerInput.includes('profit') || lowerInput.includes('money')) {
+                return `We're HUNGRY for profits boss! 💰 Currently scanning for the best risk/reward setups. The scanner shows hottest movers - let's eat!`;
+            }
+            if (lowerInput.includes('help')) {
+                return `I got you boss! I can: scan ALL markets (crypto, memes, Polymarket, sports, commodities), find hot entries, execute trades, and call you with updates. Just tell me what you need! 🤖`;
+            }
+            if (lowerInput.includes('call')) {
+                return `Want me to call you? Hit that green CALL OMNICUS button below the chat! I'll ring you up with market updates and trade alerts. 📞`;
+            }
+            
+            return `Got it boss! I'm watching everything - crypto, meme coins, prediction markets, sports, commodities. The scanner's live with all platform links ready. What specific market you wanna cook? 🔥`;
+        }
+
+        function openWalletModal() {
+            document.getElementById('walletModal').classList.add('active');
+        }
+
+        function closeWalletModal() {
+            document.getElementById('walletModal').classList.remove('active');
+        }
+
+        function connectWallet(type) {
+            const walletNames = {
+                'metamask': 'MetaMask',
+                'phantom': 'Phantom',
+                'walletconnect': 'WalletConnect'
+            };
+            
+            closeWalletModal();
+            addOmnicusMessage(`Connecting to ${walletNames[type]}... 🔗`);
+            
+            setTimeout(() => {
+                document.querySelector('.balance-display').textContent = '$1,234.56';
+                addOmnicusMessage(`Wallet connected! You've got $1,234.56 ready to trade. Let's make some money! 💰`);
+                addActivityItem('buy', 'Wallet connected');
+            }, 1500);
+        }
+
+        function quickTrade(type) {
+            const action = type === 'buy' ? 'BUY' : 'SELL';
+            addOmnicusMessage(`Quick ${action} panel ready! Select an asset from the scanner and I'll execute for you. What we trading? 📊`);
+            addActivityItem(type, `${action} panel opened`);
+        }
+
+        function scanNow() {
+            addOmnicusMessage(`Scanning ALL markets... 🔍 This might take a few seconds...`);
+            
+            setTimeout(() => {
+                addOmnicusMessage(`Scan complete! Found 23 hot opportunities: 8 meme coins pumping, 5 prediction markets with edge, 4 sports bets with value, 3 commodities breaking out, and 3 altcoin setups. Check the scanner! 🔥`);
+                addActivityItem('scan', 'Full market scan completed');
+            }, 2000);
+        }
+
+        let autoTrading = false;
+        function toggleAuto() {
+            autoTrading = !autoTrading;
+            const btn = event.target.closest('.action-btn');
+            btn.innerHTML = autoTrading ? 
+                '<span>🤖</span><span>AUTO: ON</span>' : 
+                '<span>🤖</span><span>AUTO: OFF</span>';
+            btn.style.borderColor = autoTrading ? 'rgba(0, 255, 136, 0.5)' : 'rgba(255, 170, 0, 0.3)';
+            
+            addOmnicusMessage(autoTrading ? 
+                `AUTO MODE ACTIVATED! 🔥 I'm now scanning and executing trades automatically. Stay hungry!` :
+                `Auto mode off. Back to manual control, boss. I'll still watch everything for you!`
+            );
+        }
+
+        function callOmnicus() {
+            addOmnicusMessage(`📞 Calling you now, boss! I'll give you a full market briefing. Make sure your phone's handy!`);
+            addActivityItem('scan', 'Initiating phone call...');
+            
+            // In real implementation, this would trigger Twilio call
+            setTimeout(() => {
+                addOmnicusMessage(`Call connected! Here's the briefing: BTC up 2.3%, meme coins ripping, Polymarket volume exploding. Three hot picks: WIF, SUI, and Trump 2024 prediction. You want me to execute any trades?`);
+            }, 2000);
+        }
+
+        // ============================================
+        // LIVE UPDATES SIMULATION
+        // ============================================
+
+        function simulatePriceUpdates() {
+            setInterval(() => {
+                // Randomly update some prices slightly
+                const cards = document.querySelectorAll('.market-card');
+                if (cards.length > 0) {
+                    const randomCard = cards[Math.floor(Math.random() * cards.length)];
+                    randomCard.style.boxShadow = '0 0 20px rgba(0, 255, 136, 0.3)';
+                    setTimeout(() => {
+                        randomCard.style.boxShadow = '';
+                    }, 500);
+                }
+            }, 3000);
+        }
+
+        function simulateActivity() {
+            const activities = [
+                { type: 'scan', msg: 'Scanned pump.fun for new launches' },
+                { type: 'scan', msg: 'Polymarket odds updated' },
+                { type: 'buy', msg: 'Whale bought 500K WIF' },
+                { type: 'sell', msg: 'Large PEPE sell detected' },
+                { type: 'scan', msg: 'Silver breaking resistance' }
+            ];
+            
+            setInterval(() => {
+                if (Math.random() > 0.7) {
+                    const activity = activities[Math.floor(Math.random() * activities.length)];
+                    addActivityItem(activity.type, activity.msg);
+                }
+            }, 5000);
+        }
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAllMarkets();
+            renderNews();
+            renderHotPicks();
+            simulatePriceUpdates();
+            simulateActivity();
+            
+            // Initial activity
+            addActivityItem('scan', 'OMNICUS initialized - scanning all markets');
+            addActivityItem('scan', 'Connected to: Binance, Polymarket, pump.fun, Axiom');
+        });
+    </script>
+</body>
+</html>
