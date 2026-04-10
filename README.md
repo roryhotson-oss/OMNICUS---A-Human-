@@ -158,3 +158,22 @@ MIT License + Gift Economy Addendum
 ---
 
 **🚀 OMNICUS ULTIMATE - Ready for GitHub & Trading!**
+
+## 🆕 New Features
+- **📈 Stock Trading**: Integrated **Alpaca Markets** for US Stocks (Paper & Live).
+- **🧠 Local AI**: Supports **Ollama** (Llama 3) for private, on-device trade reasoning.
+- **📱 Telegram Voice**: OMNICUS can now call you with trade updates.
+
+## 📦 Installation
+```bash
+pip install -r requirements.txt
+# Includes: alpaca-py, ollama, python-telegram-bot
+```
+
+## ⚙️ Configuration
+Add to `.env`:
+```env
+ALPACA_API_KEY=...
+ALPACA_SECRET_KEY=...
+OLLAMA_MODEL=llama3
+```
