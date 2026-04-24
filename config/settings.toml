@@ -6,6 +6,12 @@
 # Minimum confidence to execute trade
 min_confidence = 0.60
 
+# Hybrid mode settings
+hybrid_confidence_threshold = 0.85
+hybrid_max_real_position_percent = 2.0
+hybrid_paper_learning_trades = 50
+hybrid_enabled = true
+
 # Maximum position size as % of portfolio
 max_position_percent = 5.0
 

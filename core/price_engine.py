@@ -277,7 +277,7 @@ class TechnicalIndicators:
         ema_slow = TechnicalIndicators.calculate_ema(prices, slow_period)
         
         macd_line = []
-        for fast, slow in zip(ema_fast,[ema_slow):
+        for fast, slow in zip(ema_fast, ema_slow):
             if fast is None or slow is None:
                 macd_line.append(None)
             else:
