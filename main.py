@@ -140,26 +140,36 @@ async def run_full_system(port: int = 5000):
     from soul import OMNICUSPersonality, VoiceEngine
     
     # Show personality intro
-    personality = OMNICUSPersonality()
-    print(personality.introduce_self())
-    
-    # Initialize voice
-    voice = VoiceEngine()
-    voice.say_greeting()
-    
-    # Create trader
-    trading_mode = os.getenv("TRADING_MODE", "simulation")
-    mode_map = {
-        'simulation': TradingMode.SIMULATION,
-        'testnet': TradingMode.TESTNET,
-        'mainnet': TradingMode.MAINNET
-    }
-    
-    trader = HybridTradingSystem(
-        trading_mode=mode_map.get(trading_mode, TradingMode.SIMULATION),
-        initial_balance=float(os.getenv("STARTING_CAPITAL", 10000)),
-        enable_voice=True
-    )
+    try:
+        from soul.personality import OMNICUSPersonality
+        from soul.voice import VoiceEngine
+        from core.trading_mode import TradingMode
+        from core.hybrid_system import HybridTradingSystem
+        
+        personality = OMNICUSPersonality()
+        print(personality.introduce_self())
+        
+        # Initialize voice
+        voice = VoiceEngine()
+        voice.say_greeting()
+        
+        # Create trader
+        trading_mode = os.getenv("TRADING_MODE", "simulation")
+        mode_map = {
+            'simulation': TradingMode.SIMULATION,
+            'testnet': TradingMode.TESTNET,
+            'mainnet': TradingMode.MAINNET
+        }
+        
+        trader = HybridTradingSystem(
+            trading_mode=mode_map.get(trading_mode, TradingMode.SIMULATION),
+            initial_balance=float(os.getenv("STARTING_CAPITAL", 10000)),
+            enable_voice=True
+        )
+    except ImportError as e:
+        logger.error(f"Failed to import trading modules: {e}")
+        logger.error("Please ensure all required packages are installed")
+        sys.exit(1)
     
     # Start trader in background
     trader_task = asyncio.create_task(trader.start())
@@ -209,6 +219,23 @@ def check_security():
         issues.append("⚠️  SECRET_KEY not set - generate a secure random key")
     elif len(secret_key) < 32:
         issues.append("⚠️  SECRET_KEY too short - use at least 32 characters")
+    
+    # Check required trading configuration
+    required_keys = ['BINANCE_API_KEY', 'BINANCE_API_SECRET']
+    if os.getenv("TRADING_MODE", "simulation") != "simulation":
+        for key in required_keys:
+            if not os.getenv(key):
+                issues.append(f"⚠️  {key} not set - required for live trading")
+    
+    # Check for hardcoded keys in code (basic check)
+    dangerous_patterns = ["api_key = "", "api_secret = "", "password = ""]
+    for py_file in Path(".").rglob("*.py"):
+        if "venv" in str(py_file) or "__pycache__" in str(py_file):
+            continue
+        try:
+            content = py_file.read_text()
+            for pattern in dangerous_patterns:
+
     
     # Check for hardcoded keys in code (basic check)
     dangerous_patterns = ["api_key =", "api_secret =", "password ="]

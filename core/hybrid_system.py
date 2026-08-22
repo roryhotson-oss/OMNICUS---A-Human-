@@ -22,14 +22,28 @@ import os
 from .trading_mode import TradingMode, RiskLevel
 from .trading_agent import AITradingAgent, TradeSignal, Position
 
-# Import from parent directories
+# Import from sibling packages
 import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
+from pathlib import Path
 
-from agent import AIBrain, MarketContext
-from soul import OMNICUSPersonality, VoiceEngine, VoiceMode
-from connectors import BinanceConnector, UnifiedExchangeManager
-from config.settings import settings
+# Add project root to path
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+# Import with error handling
+try:
+    from agent.ai_brain import AIBrain, MarketContext
+    from soul.personality import OMNICUSPersonality
+    from soul.voice import VoiceEngine, VoiceMode
+    from connectors.unified import UnifiedExchangeManager
+    from config.settings import settings
+except ImportError as e:
+    import logging as log_module
+    logger = log_module.getLogger('OMNICUS')
+    logger.error(f"Failed to import required modules: {e}")
+    logger.error("Please ensure agent/, soul/, connectors/, and config/ directories exist in project root")
+    raise
 
 logging.basicConfig(
     level=logging.INFO,

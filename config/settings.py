@@ -6,7 +6,7 @@ SECURITY: No hardcoded secrets! All sensitive data loaded from environment.
 
 import os
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pathlib import Path
 from dataclasses import dataclass, field
 from dotenv import load_dotenv
@@ -196,6 +196,78 @@ class DashboardConfig:
         self.bind_local = os.getenv("DASHBOARD_BIND_LOCAL", "true").lower() == "true"
 
 
+
+
+class ConfigValidator:
+    """Validates configuration and checks for issues."""
+    
+    @staticmethod
+    def validate_all() -> Dict[str, List[str]]:
+        """Validate all configuration and return issues by category."""
+        issues = {
+            'critical': [],
+            'warning': [],
+            'info': []
+        }
+        
+        # Validate security config
+        security = SecurityConfig()
+        if not security.secret_key:
+            issues['critical'].append("SECRET_KEY not set - generate a secure random key")
+        elif len(security.secret_key) < 32:
+            issues['warning'].append("SECRET_KEY too short - use at least 32 characters")
+        
+        # Validate trading mode
+        trading = TradingConfig()
+        if trading.mode not in ['simulation', 'paper', 'testnet', 'real']:
+            issues['warning'].append(f"Invalid TRADING_MODE: {trading.mode}")
+        
+        # Check for live trading without credentials
+        if trading.mode in ['testnet', 'real'] and not trading.paper_trading:
+            binance = BinanceConfig()
+            if not binance.api_key or not binance.api_secret:
+                issues['critical'].append("Live trading enabled but BINANCE_API_KEY or BINANCE_API_SECRET missing")
+        
+        # Validate exchange configs
+        exchanges = [
+            ('Binance', BinanceConfig),
+            ('Kraken', KrakenConfig),
+            ('MEXC', MEXCConfig),
+            ('Polymarket', PolymarketConfig),
+            ('Alpaca', AlpacaConfig)
+        ]
+        
+        for name, config_class in exchanges:
+            config = config_class()
+            # Check if any credential is partially set
+            attrs = [a for a in dir(config) if not a.startswith('_') and 'key' in a.lower() or 'secret' in a.lower()]
+            has_any = any(getattr(config, a, None) for a in attrs)
+            has_all = all(getattr(config, a, None) for a in attrs if 'key' in a.lower() or 'secret' in a.lower())
+            
+            if has_any and not has_all:
+                issues['warning'].append(f"{name}: Partial credentials - either set all or none")
+        
+        # Check .env file
+        env_path = Path(__file__).parent.parent / ".env"
+        if not env_path.exists():
+            issues['info'].append(".env file not found - copy .env.example and configure")
+        
+        return issues
+    
+    @staticmethod
+    def validate_for_live_trading() -> bool:
+        """Check if configuration is valid for live trading."""
+        issues = ConfigValidator.validate_all()
+        return len(issues['critical']) == 0
+    
+    @staticmethod
+    def get_required_keys() -> List[str]:
+        """Get list of all required environment variables."""
+        return [
+            'SECRET_KEY',
+            'BINANCE_API_KEY',
+            'BINANCE_API_SECRET',
+        ]
 class Settings:
     """
     Main configuration class for OMNICUS.

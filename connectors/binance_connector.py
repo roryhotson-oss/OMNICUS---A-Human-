@@ -6,8 +6,10 @@ Integration with Binance exchange for crypto trading.
 
 import asyncio
 import logging
-from typing import Dict, List, Optional, Any
+import time
+from typing import Dict, List, Optional, Any, Callable
 from datetime import datetime
+from functools import wraps
 
 from .base import (
     BaseConnector, OrderResult, OrderSide, OrderType, 
@@ -15,6 +17,52 @@ from .base import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# Rate limiting configuration
+BINANCE_RATE_LIMIT = 1200  # requests per minute
+BINANCE_BURST_LIMIT = 10  # requests per second burst
+
+_request_data = {'count': 0, 'last_time': 0.0}
+_rate_lock = None
+
+
+def rate_limited(max_per_minute: int = BINANCE_RATE_LIMIT, max_per_second: int = BINANCE_BURST_LIMIT):
+    """Decorator for rate limiting API calls."""
+    def decorator(func: Callable):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            global _request_data, _rate_lock
+            
+            if _rate_lock is None:
+                _rate_lock = asyncio.Lock()
+            
+            async with _rate_lock:
+                current_time = time.time()
+                
+                # Reset counter if minute has passed
+                if current_time - _request_data['last_time'] > 60:
+                    _request_data['count'] = 0
+                    _request_data['last_time'] = current_time
+                
+                # Check rate limits
+                if _request_data['count'] >= max_per_minute:
+                    wait_time = 60 - (current_time - _request_data['last_time'])
+                    logger.warning(f"Rate limit reached. Waiting {wait_time:.1f}s...")
+                    await asyncio.sleep(wait_time + 0.1)
+                    _request_data['count'] = 0
+                    _request_data['last_time'] = time.time()
+                
+                # Check burst limit
+                if _request_data['count'] >= max_per_second:
+                    await asyncio.sleep(0.1)
+                
+                _request_data['count'] += 1
+            
+            return await func(*args, **kwargs)
+        
+        return wrapper
+    return decorator
 
 
 class BinanceConnector(BaseConnector):
@@ -73,6 +121,7 @@ class BinanceConnector(BaseConnector):
         self.is_connected = False
         logger.info("Disconnected from Binance")
     
+    @rate_limited()
     async def _request(
         self,
         method: str,
@@ -81,7 +130,7 @@ class BinanceConnector(BaseConnector):
         params: Optional[Dict] = None,
         data: Optional[Dict] = None
     ) -> Dict:
-        """Make HTTP request to Binance API"""
+        """Make HTTP request to Binance API with rate limiting"""
         import aiohttp
         import hashlib
         import hmac
